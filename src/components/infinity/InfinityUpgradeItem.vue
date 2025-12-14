@@ -18,7 +18,7 @@ const cost = computed(() => 'max' in UPG ? UPG.cost(player.infinity.upgrades[id]
 <template>
   <div>
     <PrimaryButton class="g--infinity-button upgrade" :enabled="(UPG.condition?.() ?? true) && Decimal.gte(player.infinity.points,cost)" :bought="bought" @click="purchaseInfinityUpgrade(id)">
-      <img src="@/assets/textures/infinity.png" draggable="false">
+      <img src="/assets/textures/infinity.png" draggable="false">
       <div v-html="UPG.description"></div>
       <div v-if="hasEffect || !bought">
         <hr class="sub-line">

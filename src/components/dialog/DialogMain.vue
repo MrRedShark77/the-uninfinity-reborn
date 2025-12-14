@@ -81,7 +81,7 @@ function activateDialog(func?: VoidFunction) {
   height: 40px;
   cursor: pointer;
   border-radius: 5px;
-  background: white url("/src/assets/textures/black_cross.png") center no-repeat;
+  background: white url("/assets/textures/black_cross.png") center no-repeat;
   background-size: 30px;
 }
 .footer #dialog-close {

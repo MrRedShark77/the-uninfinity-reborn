@@ -1,15 +1,15 @@
 @font-face {
-  src: url(/src/assets/Roboto-VariableFont_wdth,wght.ttf);
+  src: url(/assets/Roboto-VariableFont_wdth,wght.ttf);
   font-family: Roboto
 }
 
 @font-face {
-  src: url(/src/assets/arialmt.ttf);
+  src: url(/assets/arialmt.ttf);
   font-family: ArialMT
 }
 
 @font-face {
-  src: url(/src/assets/iconly.ttf);
+  src: url(/assets/iconly.ttf);
   font-family: Iconly
 }
 
@@ -356,12 +356,12 @@ button * {
 }
 
 .o-achievement--cell {
-  background-image: url('../assets/textures/achievements.png');
+  background-image: url('/assets/textures/achievements.png');
 }
 .o-achievement--cell-hidden {
   background-color: #555;
   border-color: #888;
-  background-image: url('../assets/textures/achhidden.png');
+  background-image: url('/assets/textures/achhidden.png');
   background-size: 124px;
 }
 

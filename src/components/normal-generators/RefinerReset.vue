@@ -11,7 +11,7 @@ const b = computed(() => Decimal.div(REFINER.calc_boost(player.points), temp.ref
 
 <template>
   <PrimaryButton v-if="REFINER.unlocked" :enabled="Decimal.gt(player.points, player.refiner.highest)" @click="() => REFINER.refine()">
-    <img class="image" src="@/assets/textures/star.png" draggable="false">
+    <img class="image" src="/assets/textures/star.png" draggable="false">
     <div class="g--gen-top">
       <div><b>Generator Refiner</b></div>
     </div>

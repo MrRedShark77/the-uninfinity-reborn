@@ -22,7 +22,7 @@ const canExpand = computed(() => {
 <template>
   <div :class="{[EXPANDER.canQuickReset ? 'g--generator' : 'full']: true}">
     <PrimaryButton :enabled="canExpand" @click="() => EXPANDER.expand()">
-      <img class="image" src="@/assets/textures/expand.png" draggable="false">
+      <img class="image" src="/assets/textures/expand.png" draggable="false">
       <div class="g--gen-top">
         <div><b>Generator Expanders</b> ({{ format(EXPANDER.amount,0) }})</div>
       </div>
