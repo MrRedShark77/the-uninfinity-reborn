@@ -21,7 +21,7 @@ function activateDialog(func?: VoidFunction) {
     <div id="dialog-header">
       <div></div>
       <div id="dialog-title" v-html="state.dialog.current.title"></div>
-      <div id="dialog-close" @click="closeDialog()"></div>
+      <div id="dialog-close" @click="closeDialog()"><img src="/assets/textures/black_cross.png"></div>
     </div>
     <hr class="line">
     <div id="dialog-content">
@@ -81,7 +81,7 @@ function activateDialog(func?: VoidFunction) {
   height: 40px;
   cursor: pointer;
   border-radius: 5px;
-  background: white url("/assets/textures/black_cross.png") center no-repeat;
+  border: none;
   background-size: 30px;
 }
 .footer #dialog-close {

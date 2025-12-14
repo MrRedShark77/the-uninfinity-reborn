@@ -2,7 +2,7 @@ export const texturesURL = import.meta.glob('@assets/textures/*.{png,jpg,jpeg,PN
 
 // console.log(texturesURL)
 
-export const generatorTextures = ['', ...new Array(10).fill('').map((_,i) => `/public/assets/textures/generator-${i+1}.png`).map(x => texturesURL[x])]
-export const infinityGeneratorTextures = ['', ...new Array(10).fill('').map((_,i) => `/public/assets/textures/inf-generator-${i+1}.png`).map(x => texturesURL[x])]
+export const generatorTextures = ['', ...new Array(10).fill('').map((_,i) => `/src/assets/textures/generator-${i+1}.png`).map(x => texturesURL[x])]
+export const infinityGeneratorTextures = ['', ...new Array(10).fill('').map((_,i) => `/src/assets/textures/inf-generator-${i+1}.png`).map(x => texturesURL[x])]
 
 // console.log(generatorTextures)
