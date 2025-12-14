@@ -1,0 +1,420 @@
+@font-face {
+  src: url(/src/assets/Roboto-VariableFont_wdth\,wght.ttf);
+  font-family: Roboto
+}
+
+@font-face {
+  src: url(/src/assets/arialmt.ttf);
+  font-family: ArialMT
+}
+
+@font-face {
+  src: url(/src/assets/iconly.ttf);
+  font-family: Iconly
+}
+
+:root {
+  --flux-color: hsl(60, 100%, 75%),
+}
+
+.icon {
+  font-family: Iconly;
+}
+
+* {
+  font-family: "Arial MT", Roboto;
+  table-align: center;
+  text-align: center;
+  user-select: none;
+}
+
+body {
+  margin: 0px 10px;
+  font-size: 14px;
+  overflow-x: hidden;
+  background: #011;
+  color: white;
+}
+
+h1 {
+  display: inline;
+  font-weight: normal;
+  font-size: 28px;
+}
+
+h2 {
+  display: inline;
+  font-weight: normal;
+  font-size: 24px;
+}
+
+h3 {
+  display: inline;
+  font-weight: bold;
+  font-size: 20px;
+}
+
+h4 {
+  display: inline;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.free-select {
+  user-select: text;
+}
+
+.table-center {
+  display: flex;
+  justify-content: center;
+  flex-flow: row wrap;
+}
+
+.table-left {
+  display: flex;
+  justify-content: start;
+  flex-flow: row wrap;
+}
+
+.item-left {
+  width: 100%;
+  text-align: left;
+}
+
+.line, .black-line, .sub-line {
+	margin: 6px 0px;
+	height: 0px;
+
+	border: none;
+	border-top: solid 2px white;
+}
+.black-line {
+	border-top-color: black;
+}
+.sub-line {
+  width: calc(100% - 10px);
+  margin: 6px auto;
+  border-top-color: #fff2;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background-color: #0000;
+}
+
+*::-webkit-scrollbar-thumb {
+  background-color: #888;
+  border-radius: 10px;
+}
+
+.o-primary-btn {
+  position: relative;
+  margin: 2px;
+
+  --button-color: white;
+
+  font-size: 12px;
+  border: solid 2px var(--button-color);
+  border-radius: 5px;
+  background-color: color-mix(in srgb, var(--button-color) 4%, transparent);
+  padding: 4px 8px;
+  color: white;
+
+  cursor: pointer;
+
+  transition-property: background-color, border, color, box-shadow;
+  transition-duration: 0.25s;
+}
+button * {
+  user-select: none;
+}
+
+.no-active {
+  cursor: default;
+}
+
+.o-primary-btn:not(.o-primary-btn--disabled,.o-primary-btn--bought,.no-active,:active):hover {
+  box-shadow: 0px 0px 10px var(--button-color);
+  background-color: color-mix(in srgb, var(--button-color) 8%, transparent);
+}
+
+/*
+.o-primary-btn:not(.no-active):active {
+  border-style: inset;
+}
+  */
+
+.o-primary-btn.o-primary-btn--disabled {
+  --button-color: red;
+  color: white !important;
+
+  cursor: default;
+}
+
+.o-primary-btn.o-primary-btn--bought {
+  border-color: lime;
+  color: white !important;
+
+  cursor: default;
+}
+
+.generators {
+  display: grid;
+  justify-content: center;
+  grid-template-columns: repeat(4, 300px);
+  grid-auto-rows: minmax(180px, auto);
+  gap: 5px;
+  margin-top: 5px;
+}
+.generators button {
+  position: relative;
+  font-size: 12px;
+  margin: 0px;
+  padding: 0px;
+}
+
+.g--generator {
+  display: grid;
+  grid-template-rows: 1fr 20px;
+  grid-template-columns: 1fr;
+  min-height: 180px;
+}
+
+.g--gen-top {
+  position: absolute;
+  top: 0px;
+  left: 5px;
+  width: calc(100% - 10px);
+
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+}
+.g--expander .g--gen-top {
+  grid-template-columns: 1fr;
+}
+
+.g--generator .g--gen-top > div:nth-child(3n + 1) {
+  grid-column: 1 / 3;
+  margin-bottom: 5px;
+}
+
+.g--gen-L {
+  justify-self: left;
+  text-align: left;
+}
+.g--gen-R {
+  justify-self: right;
+  text-align: right;
+}
+
+.g--gen-bottom {
+  position: absolute;
+  bottom: 0px;
+  left: 0px;
+  width: 100%;
+}
+
+.g--expander {
+  min-height: 180px;
+}
+
+.g--generator-button, .g--expander {
+  --button-color: #8ff;
+}
+.g--infinity-button {
+  --button-color: #ff9400;
+}
+.g--energy-button {
+  --button-color: #2196f3;
+}
+.g--eternity-button {
+  --button-color: #b341e0;
+}
+.g--flux-button {
+  --button-color: var(--flux-color);
+}
+
+.g--topbar-div {
+  display: grid;
+  grid-template-columns: 240px;
+  grid-template-rows: minmax(35px, auto) 1fr;
+  height: 100%;
+  font-size: 12px;
+}
+.g--topbar-div > div {
+  align-self: self-end;
+}
+
+.g--points {
+  font-weight: bold;
+  text-shadow: 1px 1px 5px #fff;
+}
+.g--infinity {
+  color: #ff9400;
+  font-weight: bold;
+  text-shadow: 1px 1px 5px #ff9400;
+}
+.g--energy {
+  color: #2196f3;
+  font-weight: bold;
+  text-shadow: 1px 1px 5px #2196f3;
+}
+
+.g--flux-text {
+  color: var(--flux-color);
+}
+.g--flux {
+  color: var(--flux-color);
+  font-weight: bold;
+  text-shadow: 1px 1px 5px var(--flux-color);
+}
+
+.g--challenge {
+  width: 380px;
+  height: 160px;
+
+  border: solid 2px white;
+  border-radius: 5px;
+  background-color: color-mix(in srgb, white 4%, transparent);
+
+  font-size: 12px;
+  padding: 4px 8px;
+
+  position: relative;
+}
+.g--challenge.infinity {
+  border-color: #ff9400;
+  background-color: color-mix(in srgb, #ff9400 4%, transparent);
+}
+
+.g--challenge-header {
+  position: absolute;
+  bottom: calc(100% + 3px);
+  left: 0px;
+  width: 100%;
+  font-weight: bold;
+  text-align: left;
+  font-size: 14px;
+}
+
+.g--challenge-bottom {
+  position: absolute;
+  bottom: 4px;
+  left: 8px;
+  width: calc(100% - 16px);
+}
+
+.g--automation {
+  width: 250px;
+
+  border: solid 2px white;
+  border-radius: 5px;
+  background-color: color-mix(in srgb, white 4%, transparent);
+
+  font-size: 12px;
+  padding: 4px;
+
+  position: relative;
+
+  display: grid;
+  grid-template-rows: auto minmax(40px, auto) auto 30px 40px;
+  gap: 4px;
+}
+
+.g--automation-switch {
+  display: grid;
+  grid-template-columns: 1fr 20px;
+  min-height: 20px;
+  align-items: center;
+}
+.g--automation-switch > div {
+  text-align: left;
+}
+.g--automation-switch > input {
+  height: 20px;
+  padding: 0px;
+  margin: 0px;
+}
+
+.o-achievements-grid {
+  display: grid;
+  justify-content: center;
+  grid-template-columns: repeat(8, 128px);
+  grid-auto-rows: 128px;
+  grid-gap: 5px;
+}
+
+.o-achievement--cell, .o-achievement--cell-hidden {
+  position: relative;
+  background-color: #a3a3a3;
+  border: solid 2px #b84b5f;
+  border-radius: 10px;
+}
+
+.o-achievement--cell {
+  background-image: url('../assets/textures/achievements.png');
+}
+.o-achievement--cell-hidden {
+  background-color: #555;
+  border-color: #888;
+  background-image: url('../assets/textures/achhidden.png');
+  background-size: 124px;
+}
+
+.o-achievement--cell.unlocked {
+  background-color: #5ac467;
+  border-color: #127a20;
+}
+
+#notifications {
+  position: fixed;
+  top: 5px;
+  right: 5px;
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: end;
+  gap: 2px;
+  pointer-events: none;
+}
+
+.notification {
+  position: relative;
+
+  --n-color: white;
+
+  --n-percent: 100%;
+  --n-duration: 5s;
+
+  background: var(--n-color);
+  border: solid 2px color-mix(in srgb, var(--n-color) 50%, black);
+  border-radius: 5px;
+
+  color: black;
+
+  padding: 5px 10px 10px 10px;
+  font-size: 16px;
+  width: fit-content;
+
+  overflow: hidden;
+  text-align: right;
+
+  z-index: 2;
+  pointer-events: all;
+}
+
+.notification::after {
+  content: "";
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+  width: var(--n-percent);
+  transition: width var(--n-duration) linear;
+  height: 5px;
+  background: color-mix(in srgb, var(--n-color) 50%, black);
+
+  color: gold;
+}
