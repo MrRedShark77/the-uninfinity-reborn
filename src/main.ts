@@ -37,4 +37,8 @@ export function load() {
   // Quote.addToQueue(Quotes.test);
 }
 
-export const app = createApp(App).mount('#app')
+try {
+  createApp(App).mount('#app')
+} catch (error) {
+  console.error(error)
+}
