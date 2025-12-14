@@ -283,6 +283,8 @@ export function copySave() {
   copyText.select();
   document.execCommand("copy");
   copyText.style.visibility = "hidden"
+
+  notify("Successfully exported to clipboard, you can paste anywhere!","success")
 }
 
 export function saveFile() {
@@ -340,6 +342,8 @@ export function importy() {
 
 export function wipe() {
   if(confirm(`Are you sure you want to wipe your save?`)) {
+
+    player.quotes = [];
     player.challenges.normal.fastest = new Array(12).fill(Number.MAX_VALUE)
     player.challenges.infinity.fastest = new Array(8).fill(Number.MAX_VALUE)
     state.flux_speed = 1;
