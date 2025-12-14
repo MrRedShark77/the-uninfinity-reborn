@@ -8,6 +8,7 @@ import type { DecimalSource } from "break_eternity.js"
 import { toRaw } from "vue";
 import { notify } from "./notify";
 import { AchievementKeys, giveAchievement } from "@/data/achievements";
+import { Quotes } from "./quote";
 
 const LOCALSTORAGE_NAME = "uninfinity-reborn-save";
 const VERSION = 1;
@@ -95,7 +96,7 @@ export type Save = {
   lastPlayed: number;
 
   achievements: Record<number, boolean>;
-  quotes: string[];
+  quotes: Record<string, boolean>;
 
   options: {
     notation: number;
@@ -180,7 +181,7 @@ export function getSaveData(): Save {
     lastPlayed: Date.now(),
 
     achievements: {},
-    quotes: [],
+    quotes: {},
 
     options: {
       notation: 2,
@@ -203,6 +204,7 @@ export function getSaveData(): Save {
   for (const i in InfinityEnergy.upgrades) S.infinity.energy.upgrades[i] = 0;
 
   for (const i of AchievementKeys) S.achievements[i] = false;
+  for (const i of Object.keys(Quotes)) S.quotes[i] = false;
 
   for (const k in AUTOMATIONS) {
     S.automations[k] = {
@@ -343,7 +345,6 @@ export function importy() {
 export function wipe() {
   if(confirm(`Are you sure you want to wipe your save?`)) {
 
-    player.quotes = [];
     player.challenges.normal.fastest = new Array(12).fill(Number.MAX_VALUE)
     player.challenges.infinity.fastest = new Array(8).fill(Number.MAX_VALUE)
     state.flux_speed = 1;

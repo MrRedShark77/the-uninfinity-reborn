@@ -128,9 +128,9 @@ export const Quote = {
   addFromKeys(k: string, debug = false) {
     const Q = Quotes[k]
 
-    if (Q === undefined || !debug && player.quotes.includes(k)) return;
+    if (Q === undefined || !debug && player.quotes[k]) return;
 
-    if (!debug) player.quotes.push(k);
+    if (!debug) player.quotes[k] = true;
 
     this.addToQueue(Q)
   },
