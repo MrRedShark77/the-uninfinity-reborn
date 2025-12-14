@@ -5,6 +5,7 @@ import Decimal from 'break_eternity.js';
 import { computed } from 'vue';
 import PrimaryButton from '@/components/PrimaryButton.vue';
 import { INF_GENERATOR } from '@/data/generators/infinity-generators';
+import { infinityGeneratorTextures } from '@/data/textures';
 
 const { n } = defineProps<{'n' : number}>()
 
@@ -21,7 +22,7 @@ const cost = computed(() => GEN.cost)
 <template>
   <div class="g--generator" v-if="GEN.unlocked">
     <PrimaryButton class="g--generator-button g--infinity-button top" :enabled="Decimal.gte(GEN.resource,cost)" @click="GEN.purchase(false)">
-      <img class="image" :src="`the-uninfinity-reborn/assets/textures/inf-generator-${n}.png`" draggable="false">
+      <img class="image" :src="infinityGeneratorTextures[n]" draggable="false">
       <div class="g--gen-top">
         <div><b>{{ GEN.name }}</b> ({{ format(GEN.bought,0) }})</div>
         <div class="g--gen-L">Multiplier:</div><div class="g--gen-R">{{ formatMult(GEN.temp.mult) }}</div>

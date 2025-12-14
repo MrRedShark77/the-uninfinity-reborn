@@ -8,7 +8,6 @@ import { getTempData, loop, updateTemp, type TempData } from './update';
 import { checkTab } from './data/tabs';
 import { getStateData, type StateData } from './utils/state';
 import { setupKeybinds } from './utils/keybinds';
-import { createSimpleDialog } from './utils/dialog';
 
 export const player: Save = reactive(getSaveData())
 export const temp: TempData = reactive(getTempData());
@@ -32,7 +31,7 @@ export function load() {
 
   setInterval(save, 60000)
 
-  createSimpleDialog("hi","HI!","Hello, World!")
+  // createSimpleDialog("hi","HI!","Hello, World!")
   // createSimpleDialogConfirmation("hi","HI!","Hello, World!",[["Yes"],["No"]])
 
   // Quote.addToQueue(Quotes.test);
