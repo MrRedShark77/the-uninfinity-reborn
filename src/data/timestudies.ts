@@ -431,6 +431,8 @@ export const TimeTheorems: {
 ]
 
 export function purchaseTimeTheorem(i: number, max: boolean = false) {
+  if (i === 2 && Decimal.lt(player.eternity.generators[1].bought, 1)) return;
+
   let cost;
   const TT = TimeTheorems[i], C = CURRENCIES[TT.currency as Currency]
 
