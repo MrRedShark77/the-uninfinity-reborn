@@ -16,7 +16,7 @@ const UPGS_ORDER = [
 
 <template>
   <div v-if="energy.unlocked">
-    <p>You have <span class="g--energy">{{ format(energy.amount, 0) }}</span> {{ formatGain(energy.amount, InfinityEnergy.calc(energy.amount, Decimal.div(InfinityEnergy.base, FPS)).sub(energy.amount).mul(FPS)) }} Infinity Energy, translated to a <span class="g--energy">{{ formatMult(temp.infinity.energy.effect.mult) }}</span> multiplier on all Infinity Generators.</p>
+    <p>You have <span class="g--energy">{{ format(energy.amount, 0) }}</span> {{ formatGain(energy.amount, InfinityEnergy.calc(energy.amount, Decimal.div(InfinityEnergy.base, FPS)).sub(energy.amount).mul(FPS)) }} Infinity Energy<sup class="g--energy">{{ format(InfinityEnergy.exponent,3) }}</sup>, translated to a <span class="g--energy">{{ formatMult(temp.infinity.energy.effect.mult) }}</span> multiplier on all Infinity Generators.</p>
     <div class="energy-upgrades">
       <InfinityEnergyUpgrade v-for="x in UPGS_ORDER" :key="x" :n="x" />
     </div>
@@ -35,6 +35,9 @@ const UPGS_ORDER = [
 
 .g--energy {
   font-size: 20px;
+}
+sup.g--energy {
+  font-size: 15px !important;
 }
 
 .energy-upgrades {

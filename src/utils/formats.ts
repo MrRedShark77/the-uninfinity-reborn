@@ -138,7 +138,7 @@ export function format(
 }
 
 export const formatPlus = (x: DecimalSource, precision?: number) => (Decimal.gte(x,0) ? "+" : "") + format(x, precision);
-export const formatMult = (x: DecimalSource, precision?: number) => Decimal.lt(x,1) ? "/" + format(Decimal.pow(x, -1)) : "×" + format(x, precision);
+export const formatMult = (x: DecimalSource, precision?: number, div: boolean = true) => div && Decimal.lt(x,1) ? "/" + format(Decimal.pow(x, -1)) : "×" + format(x, precision);
 export const formatPow = (x: DecimalSource, precision?: number) => "^" + format(x, precision);
 export const formatPercent = (x: DecimalSource, precision?: number) => format(Decimal.mul(x,100), precision) + "%";
 

@@ -7,7 +7,10 @@ import { inNormalChallenge, isNCBeaten } from "./challenges/normal-challenges";
 import AutomationPromptConfigItem from "@/components/automations/AutomationPromptConfigItem.vue";
 import AutomationSwitchConfigItem from "@/components/automations/AutomationSwitchConfigItem.vue";
 import AutomationListConfigItem from "@/components/automations/AutomationListConfigItem.vue";
-import { hasInfinityUpgrade, INFINITY, InfinityUpgrade } from "./infinity";
+import { hasInfinityUpgrade, INFINITY, InfinityUpgrade, purchaseInfinityUpgrade } from "./infinity";
+import { INF_GENERATOR } from "./generators/infinity-generators";
+import { InfinityEnergy } from "./infinity-energy";
+import { ETERNITY } from "./eternity";
 
 export type AutomationSwitchData = {
   enabled: boolean,
@@ -118,6 +121,27 @@ export const AUTOMATIONS: Record<string,{
         const G = GENERATOR(i)
 
         if (G.autoUnlocked && player.autoGenerators[i].enabled) G.purchase(b && player.autoGenerators[i].bulk);
+      };
+    },
+  },
+  'inf-generators': {
+    unl: () => Decimal.gte(player.eternity.times, 9),
+    name: "Infinity Generators Autobuyer",
+
+    interval: 0,
+    decrease: 0.5,
+
+    cost: () => 0,
+    currency: Currency.EternityPoints,
+
+    bulkOption: true,
+    tick(data) {
+      const b = data.bulk
+
+      for (let i = 1; i <= 10; i++) {
+        const G = INF_GENERATOR(i)
+
+        if (G.autoUnlocked && player.infinity.autoGenerators[i].enabled) G.purchase(b && player.infinity.autoGenerators[i].bulk);
       };
     },
   },
@@ -245,6 +269,10 @@ export const AUTOMATIONS: Record<string,{
           setupAutomationTimeout('infinity', (configs.time as AutomationPromptData).value as number, ()=>INFINITY.crunch(), ()=>!INFINITY.reached, ()=>mode.value!=="time")
           return
         }
+        case "mult": {
+          if (Decimal.mul(player.infinity.points, (configs.mult as AutomationPromptData).value).lte(temp.currencies.infinity)) INFINITY.crunch();
+          return
+        }
       }
       else INFINITY.crunch()
     },
@@ -261,6 +289,7 @@ export const AUTOMATIONS: Record<string,{
         list: [
           ['amount','Amount',()=>true],
           ['time','Time',()=>true],
+          ['mult','Multiplier',()=>Decimal.gte(player.eternity.times, 4)],
         ],
       },{
         id: "amount",
@@ -283,6 +312,129 @@ export const AUTOMATIONS: Record<string,{
 
         isDecimal: false,
         minimum: 0,
+        canSwitch: false,
+      },{
+        id: "mult",
+        type: "prompt",
+
+        condition: () => player.infinity.break && getAutomationConfigValue('infinity','mode') == 'mult',
+        name: `Big Crunch at X times highest IP`,
+        default: 1,
+
+        isDecimal: true,
+        minimum: 1,
+        canSwitch: false,
+      },
+    ],
+  },
+  'ip-mult': {
+    unl: () => Decimal.gte(player.eternity.times, 1),
+    name: "IP Multiplier Autobuyer",
+
+    interval: 0,
+    decrease: 0.5,
+
+    cost: () => 0,
+    currency: Currency.EternityPoints,
+
+    bulkOption: true,
+    tick(data) {
+      purchaseInfinityUpgrade(InfinityUpgrade.IPMult, data.bulk)
+    },
+  },
+  'infinity-energy': {
+    unl: () => Decimal.gte(player.eternity.times, 40),
+    name: "Infinity Energy Upgrades Autobuyer",
+
+    interval: 0,
+    decrease: 0.5,
+
+    cost: () => 0,
+    currency: Currency.EternityPoints,
+
+    bulkOption: false,
+    tick() {
+      for (let i = 0; i < InfinityEnergy.upgrades.length; i++) InfinityEnergy.purchaseUpgrade(i, true);
+    },
+  },
+  'eternity': {
+    unl: () => Decimal.gte(player.eternity.times, 50),
+    name: "Eternity Autobuyer",
+
+    interval: 0,
+    decrease: 0.5,
+
+    cost: () => 0,
+    currency: Currency.EternityPoints,
+
+    bulkOption: false,
+    tick(data) {
+      if (!ETERNITY.reached) return;
+
+      const configs = data.configs, mode = configs.mode as AutomationListData
+
+      switch (mode.value) {
+        case "amount": {
+          if (Decimal.gte(temp.currencies.eternity, (configs.amount as AutomationPromptData).value)) ETERNITY.eternity();
+          return
+        }
+        case "time": {
+          setupAutomationTimeout('eternity', (configs.time as AutomationPromptData).value as number, ()=>ETERNITY.eternity(), ()=>!ETERNITY.reached, ()=>mode.value!=="time")
+          return
+        }
+        case "mult": {
+          if (Decimal.mul(player.eternity.points, (configs.mult as AutomationPromptData).value).lte(temp.currencies.eternity)) ETERNITY.eternity();
+          return
+        }
+      }
+    },
+
+    configs: [
+      {
+        id: "mode",
+        type: "list",
+
+        condition: () => true,
+        name: `Eternity Mode`,
+        default: 'amount',
+
+        list: [
+          ['amount','Amount',()=>true],
+          ['time','Time',()=>true],
+          ['mult','Multiplier',()=>false],
+        ],
+      },{
+        id: "amount",
+        type: "prompt",
+
+        condition: () => getAutomationConfigValue('eternity','mode') == 'amount',
+        name: `Eternity at X EP`,
+        default: 1,
+
+        isDecimal: true,
+        minimum: 1,
+        canSwitch: false,
+      },{
+        id: "time",
+        type: "prompt",
+
+        condition: () => getAutomationConfigValue('eternity','mode') == 'time',
+        name: `Seconds between Eternities`,
+        default: 1,
+
+        isDecimal: false,
+        minimum: 0,
+        canSwitch: false,
+      },{
+        id: "mult",
+        type: "prompt",
+
+        condition: () => getAutomationConfigValue('eternity','mode') == 'mult',
+        name: `Eternity at X times highest EP`,
+        default: 1,
+
+        isDecimal: true,
+        minimum: 1,
         canSwitch: false,
       },
     ],

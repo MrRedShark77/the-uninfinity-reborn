@@ -7,6 +7,8 @@ import { InfinityUpgrade, simpleInfinityEffect } from "../infinity"
 import { getICCompletions, isICBeaten } from "../challenges/infinity-challenges"
 import { infinityEnergyUpgradeEffect } from "../infinity-energy"
 import { getAchievementEffect } from "../achievements"
+import { getTimeStudyEffect } from "../timestudies"
+import { simpleEternityEffect } from "../eternity"
 
 const GENERATOR_PREFIXES = ['Mono-',"Xenna-","Weka-","Vendeka-","Udeka-","Treda-","Sorta-","Rinta-","Quexa-","Pepta-","Ocha-"]
 
@@ -74,9 +76,13 @@ export const INF_GENERATOR = (i: number) => ({
       if (max) cost = this.COST(Decimal.sub(bulk = bulk.max(this.bulk),1));
 
       this.bought = bulk
-      this.resource = Decimal.sub(amount,cost).max(0)
+      if (Decimal.lt(player.eternity.times, 20)) this.resource = Decimal.sub(amount,cost).max(0);
+
+      player.achRestrictions.a93 = false;
     }
   },
+
+  get autoUnlocked() { return Decimal.gte(player.eternity.times, i + 8) },
 }) as {
   name: string,
 
@@ -100,6 +106,8 @@ export const INF_GENERATOR = (i: number) => ({
   bulk: DecimalSource;
 
   purchase(max: boolean): void;
+
+  autoUnlocked: boolean;
 }
 
 export const INF_GENERATOR_REQUIREMENTS: [DecimalSource, DecimalSource][] = [
@@ -120,13 +128,15 @@ export function getInfinityPowerEffect() {
   let OoMs = Decimal.max(player.infinity.power,1).log10();
   const fixed_OoMs = OoMs;
 
-  OoMs = softcap(OoMs, DC.DE308LOG, .5, "P")
+  const slowdown = DC.DE308.mul(simpleEternityEffect('infGenMult4'))
+
+  OoMs = softcap(OoMs, slowdown.log10(), .5, "P")
 
   const exp = Decimal.add(5, infinityEnergyUpgradeEffect(3, 0))
 
   const mult = OoMs.mul(exp).pow10()
 
-  return {exp: fixed_OoMs.gte(DC.DE308LOG) ? Decimal.div(OoMs, fixed_OoMs).mul(exp) : exp, mult}
+  return {exp: fixed_OoMs.gte(slowdown.log10()) ? Decimal.div(OoMs, fixed_OoMs).mul(exp) : exp, mult}
 }
 
 export function totalInfinityGeneratorMultiplier(): DecimalSource {
@@ -137,6 +147,11 @@ export function totalInfinityGeneratorMultiplier(): DecimalSource {
   .mul(temp.infinity.energy.effect.mult)
 
   x = x.mul(getAchievementEffect(78))
+
+  x = x.mul(simpleEternityEffect('infGenMult1')).mul(simpleEternityEffect('infGenMult2'))
+  .mul(simpleEternityEffect('infGenMult3'))
+
+  x = x.mul(getTimeStudyEffect(72)).mul(getTimeStudyEffect(92)).mul(getTimeStudyEffect(162))
 
   return x
 }

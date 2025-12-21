@@ -1,6 +1,6 @@
 import { player, temp } from "@/main"
 import { DC, expPow } from "@/utils/decimal"
-import { format, formatMult, formatPow } from "@/utils/formats"
+import { format, formatMult, formatPlus, formatPow } from "@/utils/formats"
 import { notify } from "@/utils/notify"
 import type { DecimalSource } from "break_eternity.js"
 import Decimal from "break_eternity.js"
@@ -8,6 +8,8 @@ import { getTotalFastestNC, isNCBeaten } from "./challenges/normal-challenges"
 import { hasInfinityUpgrade, InfinityUpgrade } from "./infinity"
 import { getTotalFastestIC } from "./challenges/infinity-challenges"
 import { InfinityEnergy } from "./infinity-energy"
+import { hasTimeStudy } from "./timestudies"
+import { NewsTicker } from "./news-ticker"
 
 interface Achievement {
   name: string
@@ -61,7 +63,8 @@ export const Achievements: Record<number, Achievement> = {
   },
   23: {
     name: "Where’s the NEWS?",
-    get description() { return "Encounter 10 different fact messages. (NYI)" },
+    get description() { return "Encounter 30 different fact messages." },
+    condition: () => NewsTicker.uniqueNews >= 30,
   },
   24: {
     name: "Half-Infinity",
@@ -278,7 +281,7 @@ export const Achievements: Record<number, Achievement> = {
   71: {
     name: `It’s Mario time!`,
     get description() { return `Complete the 5th Infinity Challenge in under <b>15 seconds</b>.` },
-    condition: () => player.challenges.infinity.fastest[6] <= 15,
+    condition: () => player.challenges.infinity.fastest[4] <= 15,
   },
   72: {
     name: `Jacorbian-RedSharkian balancing in a nutshell`,
@@ -357,7 +360,7 @@ export const Achievements: Record<number, Achievement> = {
   },
   86: {
     name: `Time is relative`,
-    get description() { return `Go Eternal. (NYI)` },
+    get description() { return `Go Eternal.` },
     get reward() { return `Start with the last 4 infinity upgrades bought.` },
   },
   87: {
@@ -369,6 +372,48 @@ export const Achievements: Record<number, Achievement> = {
     name: `Turning twenty`,
     get description() { return `Unlock the 10th Infinity Generator.` },
     condition: () => player.infinity.generatorsUnlocked >= 10
+  },
+
+  91: {
+    name: `Nobody brought the first 9`,
+    get description() { return `Eternity without buying Normal Generators 1-9.` },
+  },
+  92: {
+    name: `It’s been eternal years...`,
+    get description() { return `Achieve all Eternity milestones.` },
+    get reward() { return `Eternities boost Infinities gain logarithmically.` },
+    effect: [()=>Decimal.add(player.eternity.times,10).log10(),1,x=>formatMult(x)],
+    condition: () => Decimal.gte(player.eternity.times, 1e3),
+  },
+  93: {
+    name: `They’re the same generator.`,
+    get description() { return `Eternity without buying Infinity Generators.` },
+  },
+  94: {
+    name: `I realized tickspeed didn’t exist`,
+    get description() { return `Get over <b>${format(1e3,0)}</b> effective OoMs in Normal Generators.` },
+    get reward() { return `Time Shards affect Time Generators at a very reduced rate.` },
+    effect: [()=>Decimal.add(player.eternity.shards,1).log(100).sqrt(),0,x=>formatPlus(x)+" effective OoMs"],
+    condition: () => Decimal.gte(player.eternity.times, 1e3),
+  },
+  95: {
+    name: `Not stonks`,
+    get description() { return `Get Infinity Power conversion under <b>${formatPow(1,0)}</b>.` },
+    condition: () => Decimal.lt(temp.infinity.power.exp, 1),
+  },
+  96: {
+    name: `I’m waiting for eternity energy`,
+    get description() { return `Reach <b>${format(DC.DE308)}</b> Infinity Energy in under <b>one second</b> without having TS33.` },
+    condition: () => !hasTimeStudy(33) && Decimal.lte(player.infinity.time, 1) && Decimal.gte(player.infinity.energy.amount, DC.DE308),
+  },
+  97: {
+    name: `Count from ten`,
+    get description() { return `Eternity with less than <b>10</b> manual Infinities.` },
+  },
+  98: {
+    name: `It’s not even eternal`,
+    get description() { return `Eternity in under <b>10 seconds</b>.` },
+    get reward() { return `Start with <b>${format(5e25)}</b> Infinity Points in the Eternity.` },
   },
 
   /*

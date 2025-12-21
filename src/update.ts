@@ -7,13 +7,16 @@ import { CURRENCIES, Currency } from "./data/currencies";
 import { hasInfinityUpgrade, INFINITY, InfinityUpgrade, infinityUpgradeEffect, simpleInfinityEffect, updateInfinityTemp } from "./data/infinity";
 import { getNC10Exponent, inNormalChallenge } from "./data/challenges/normal-challenges";
 import { AUTO_TIMEOUTS, AUTOMATIONS } from "./data/automations";
-import { deepAssign } from "./utils/saveload";
+import { forceDeepAssign } from "./utils/saveload";
 import { getInfinityPowerEffect, INF_GEN_POWER, INF_GENERATOR, purchaseAllInfinityGenerators, totalInfinityGeneratorMultiplier } from "./data/generators/infinity-generators";
 import { checkICUnlocks, inInfinityChallenge, isICBeaten } from "./data/challenges/infinity-challenges";
 import { InfinityEnergy } from "./data/infinity-energy";
 import { AchievementKeys, Achievements, checkAllAchievements, getAchievementEffect, giveAchievement, hasAchievement, updateAchievementTemp } from "./data/achievements";
 import { keyPressed } from "./utils/keybinds";
 import { notify } from "./utils/notify";
+import { getTimeShardsEffect, TIME_GENERATOR, totalTimeGeneratorMultiplier } from "./data/generators/time-generators";
+import { getTimeStudyEffect, updateTimeStudiesTemp } from "./data/timestudies";
+import { ETERNITY, simpleEternityEffect, updateEternityTemp } from "./data/eternity";
 
 // Calculation
 
@@ -24,7 +27,10 @@ export function loop() {
 
   diff = Date.now() - player.lastPlayed;
   calc(diff/1000);
+
   document.documentElement.style.setProperty("--flux-color", `hsl(${60 * (1 + Math.sin(state.time))}, 72%, 57%)`)
+  document.documentElement.style.setProperty("--rainbow-color", `hsl(${360 * (state.time / 10 % 1)}, 100%, 50%)`)
+
   updateTemp()
 
   player.lastPlayed = Date.now() // player.lastPlayed
@@ -35,6 +41,12 @@ export function calc(dt: number) {
   const dt_flux = state.flux_speed > 1 ? Math.min(dt, dt_cap) * state.flux_speed + (Math.max(dt, dt_cap) - dt_cap) : dt
 
   cond = Decimal.gte(temp.currencies.points, player.points) ? cond + dt_flux : 0;
+
+  for (let i = 10; i > 0; i--) {
+    const G = TIME_GENERATOR(i)
+
+    player.eternity.generators[i].amount = Decimal.mul(G.temp.gain, dt_flux).add(player.eternity.generators[i].amount);
+  }
 
   for (let i = 10; i > 0; i--) {
     const G = INF_GENERATOR(i)
@@ -75,7 +87,18 @@ export function calc(dt: number) {
     player.infinity.energy.amount = InfinityEnergy.calc(player.infinity.energy.amount, Decimal.mul(InfinityEnergy.base, dt_flux))
   }
 
+  if (Decimal.gte(player.eternity.times, 5)) player.eternity.points = Decimal.mul(ETERNITY.milestones[4].rate as DecimalSource, dt_flux/60).add(player.eternity.points);
+  if (Decimal.gte(player.eternity.times, 1e3)) player.infinity.times = Decimal.mul(player.eternity.fastInfinties, dt_flux).add(player.infinity.times);
+
+  if (Decimal.gte(player.eternity.times, 100)) {
+    player.eternity.passiveTimes += dt_flux;
+    const f = player.eternity.fastest * 2
+    if (player.eternity.passiveTimes >= f) player.eternity.times = Decimal.mul(Math.floor(player.eternity.passiveTimes / f), 1).add(player.eternity.times);
+    player.eternity.passiveTimes %= f
+  } else player.eternity.passiveTimes = 0;
+
   for (const i in AUTOMATIONS) {
+
     const AUTO = AUTOMATIONS[i], DATA = player.automations[i], interval = AUTO.interval * Math.pow(AUTO.decrease, DATA.level);
 
     if (AUTO.unl() && DATA.enabled) {
@@ -123,6 +146,7 @@ export function calc(dt: number) {
   if (keyPressed('C')) INFINITY.crunch();
 
   player.timePlayed += dt_flux
+  player.eternity.time += dt_flux
 
   if (!player.infinity.reached) player.infinity.time += dt_flux;
   if (cond >= 30) giveAchievement(32);
@@ -179,6 +203,17 @@ export type TempData = {
     },
   };
 
+  eternity: {
+    upgrades: Record<string, DecimalSource>;
+
+    generators: GeneratorTemp[];
+    generator_mult: DecimalSource;
+
+    shards: DecimalSource;
+
+    timestudies: Record<string, DecimalSource>;
+  };
+
   currencies: Record<string, DecimalSource>;
 
   achievements: Record<number, DecimalSource>;
@@ -217,6 +252,17 @@ export function getTempData(): TempData {
       },
     },
 
+    eternity: {
+      upgrades: {},
+
+      generators: [],
+      generator_mult: 1,
+
+      shards: 0,
+
+      timestudies: {},
+    },
+
     currencies: {},
     achievements: {},
     no_challenges: false,
@@ -234,6 +280,12 @@ export function getTempData(): TempData {
       oom_inc: 1,
       gain: 0,
     }
+
+    T.eternity.generators[i] = {
+      mult: 1,
+      oom_inc: 1,
+      gain: 0,
+    }
   }
 
   for (const i in CURRENCIES) T.currencies[i] = 0;
@@ -246,7 +298,7 @@ export function getTempData(): TempData {
 }
 
 export function resetTemp() {
-  deepAssign(temp, getTempData())
+  forceDeepAssign(temp, getTempData())
   updateTemp()
 }
 
@@ -255,6 +307,8 @@ export function updateTemp() {
 
   updateAchievementTemp()
 
+  updateTimeStudiesTemp()
+  updateEternityTemp()
   updateInfinityTemp()
 
   InfinityEnergy.temp()
@@ -262,6 +316,10 @@ export function updateTemp() {
 
   temp.infinity.power = getInfinityPowerEffect()
   temp.infinity.generator_mult = totalInfinityGeneratorMultiplier()
+
+  temp.eternity.shards = getTimeShardsEffect()
+  temp.eternity.generator_mult = totalTimeGeneratorMultiplier()
+
   temp.generator_scale_power = getGeneratorScalingPower()
 
   temp.generator_base = getGeneratorBase();
@@ -275,6 +333,32 @@ export function updateTemp() {
   const oom_inc_exp = Decimal.sub(1, infinityUpgradeEffect(InfinityUpgrade.SlowerOoMMult,0)).pow_base(.5)
 
   for (let i = 10; i > 0; i--) {
+    const G = TIME_GENERATOR(i), T = temp.eternity.generators[i];
+
+    let OoMs = Decimal.max(G.amount,1).log10();
+    const fixed_OoMs = OoMs;
+
+    OoMs = softcap(OoMs, DC.DE308LOG, .5, "P")
+
+    T.oom_inc = OoMs.gt(0) ? fixed_OoMs.div(OoMs) : 1
+
+    T.mult = OoMs.add(getAchievementEffect(94)).pow_base(G.base)
+    .mul(temp.eternity.generator_mult)
+    .mul(Decimal.pow(4,G.bought))
+
+    if (i === 1) T.mult = T.mult.mul(getTimeStudyEffect(11)).mul(getTimeStudyEffect(103));
+
+    if (i >= 10) T.gain = 0;
+    else {
+      const NG = TIME_GENERATOR(i + 1)
+
+      const amount = NG.amount
+
+      T.gain = Decimal.mul(amount, NG.temp.mult)
+    }
+  }
+
+  for (let i = 10; i > 0; i--) {
     const G = INF_GENERATOR(i), T = temp.infinity.generators[i];
 
     let OoMs = Decimal.max(G.amount,1).log10();
@@ -284,7 +368,7 @@ export function updateTemp() {
 
     T.oom_inc = OoMs.gt(0) ? fixed_OoMs.div(OoMs) : 1
 
-    T.mult = OoMs.pow_base(G.base)
+    T.mult = OoMs.add(simpleEternityEffect('timeGenMult2',0)).pow_base(G.base)
     .mul(temp.infinity.generator_mult)
     .mul(Decimal.pow(INF_GEN_POWER[i] ?? 1,G.bought))
 
@@ -308,7 +392,7 @@ export function updateTemp() {
 
     T.oom_inc = OoMs.gt(0) ? fixed_OoMs.div(OoMs) : 1
 
-    T.mult = OoMs.pow_base(G.base)
+    T.mult = OoMs.add(temp.eternity.shards).pow_base(G.base)
     .mul(temp.generator_mult).mul(temp.refiner_boost)
     .mul(Decimal.pow(temp.generator_base,G.bought))
     .mul(Decimal.sub(player.expanders, i - 1).max(0).pow_base(temp.expander_power));

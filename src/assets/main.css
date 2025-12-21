@@ -14,7 +14,8 @@
 }
 
 :root {
-  --flux-color: hsl(60, 100%, 75%),
+  --flux-color: hsl(60, 100%, 75%);
+  --rainbow-color: hsl(0, 100%, 50%);
 }
 
 .icon {
@@ -129,6 +130,9 @@ h4 {
   transition-property: background-color, border, color, box-shadow;
   transition-duration: 0.25s;
 }
+.o-primary-btn.opaque {
+  background-color: color-mix(in srgb, var(--button-color) 4%, #011);
+}
 button * {
   user-select: none;
 }
@@ -141,12 +145,46 @@ button * {
   box-shadow: 0px 0px 10px var(--button-color);
   background-color: color-mix(in srgb, var(--button-color) 8%, transparent);
 }
+.o-primary-btn.opaque:not(.o-primary-btn--disabled,.o-primary-btn--bought,.no-active,:active):hover {
+  background-color: color-mix(in srgb, var(--button-color) 8%, #011);
+}
+
+.o-simple-frame {
+  --frame-color: white;
+
+  border: solid 2px var(--frame-color);
+  border-radius: 5px;
+  background-color: color-mix(in srgb, var(--frame-color) 4%, transparent);
+  color: white;
+
+  transition-property: background-color, border, color, box-shadow;
+  transition-duration: 0.25s;
+}
+.o-simple-frame.opaque {
+  background-color: color-mix(in srgb, var(--frame-color) 4%, #011);
+}
 
 /*
 .o-primary-btn:not(.no-active):active {
   border-style: inset;
 }
-  */
+*/
+
+.g--generator-button, .g--expander {
+  --button-color: #8ff;
+}
+.g--infinity-button {
+  --button-color: #ff9400;
+}
+.g--energy-button {
+  --button-color: #2196f3;
+}
+.g--eternity-button {
+  --button-color: #b341e0;
+}
+.g--flux-button {
+  --button-color: var(--flux-color);
+}
 
 .o-primary-btn.o-primary-btn--disabled {
   --button-color: red;
@@ -156,7 +194,7 @@ button * {
 }
 
 .o-primary-btn.o-primary-btn--bought {
-  border-color: lime;
+  --button-color: lime;
   color: white !important;
 
   cursor: default;
@@ -222,22 +260,6 @@ button * {
   min-height: 180px;
 }
 
-.g--generator-button, .g--expander {
-  --button-color: #8ff;
-}
-.g--infinity-button {
-  --button-color: #ff9400;
-}
-.g--energy-button {
-  --button-color: #2196f3;
-}
-.g--eternity-button {
-  --button-color: #b341e0;
-}
-.g--flux-button {
-  --button-color: var(--flux-color);
-}
-
 .g--topbar-div {
   display: grid;
   grid-template-columns: 240px;
@@ -257,6 +279,11 @@ button * {
   color: #ff9400;
   font-weight: bold;
   text-shadow: 1px 1px 5px #ff9400;
+}
+.g--eternity {
+  color: #b341e0;
+  font-weight: bold;
+  text-shadow: 1px 1px 5px #b341e0;
 }
 .g--energy {
   color: #2196f3;
@@ -417,4 +444,137 @@ button * {
   background: color-mix(in srgb, var(--n-color) 50%, black);
 
   color: gold;
+}
+
+.g--time-study-button {
+  width: 200px;
+  height: 140px;
+}
+.g--tree-study-block {
+  width: 204px;
+  height: 140px;
+}
+.g--time-study-id {
+  position: absolute;
+  top: 0px;
+  left: 2px;
+  font-size: 10px;
+  font-weight: bold;
+  opacity: .5;
+  color: white !important;
+}
+
+.g--time-study--NG {
+  --button-color: #3296c4 !important;
+}
+.g--time-study--NG-bought {
+  --button-color: #8ff !important;
+}
+.g--time-study--IG {
+  --button-color: #b34500 !important;
+}
+.g--time-study--IG-bought {
+  --button-color: #ff9400 !important;
+}
+.g--time-study--TG {
+  --button-color: #9932a5 !important;
+}
+.g--time-study--TG-bought {
+  --button-color: #da34ff !important;
+}
+.g--time-study--active {
+  --button-color: #8a1c18 !important;
+}
+.g--time-study--active-bought {
+  --button-color: #ff4d00 !important;
+}
+.g--time-study--passive {
+  --button-color: #759b29 !important;
+}
+.g--time-study--passive-bought {
+  --button-color: #aaff00 !important;
+}
+.g--time-study--idle {
+  --button-color: #2a2f8d !important;
+}
+.g--time-study--idle-bought {
+  --button-color: #1925ff !important;
+}
+
+#session-time {
+  position: fixed;
+  bottom: 5px;
+  left: 5px;
+  background-color: color-mix(in srgb, var(--rainbow-color) 10%, #fff1);
+  padding: 2px;
+  pointer-events: none;
+}
+
+.g--news-ticker {
+  position: relative;
+  width: calc(100% - 50px);
+  height: 22px;
+  border: solid 2px white;
+  border-radius: 5px;
+  margin: auto;
+  margin-top: 10px;
+  overflow: hidden;
+  padding: 4px 0px;
+}
+
+.g--news-ticker__line {
+  padding-left: 100%;
+  transition: transform linear;
+}
+
+.g--news-line {
+  display: inline-block;
+  white-space: nowrap;
+  text-align: left;
+  font-size: 18px;
+  font-weight: bold;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.corrupted-text {
+	color: white;
+	animation: corrupted_text 4s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+}
+
+@keyframes corrupted_text {
+	0%, 100% {
+		text-shadow: -2px -2px 2px #5555ff, 2px 2px 2px #ff5555;
+		color: white;
+	}
+	25% {
+		text-shadow: -2px 2px 2px #5555ff, 2px -2px 2px #ff5555;
+		color: #eeddff;
+	}
+	50% {
+		text-shadow: 2px 2px 2px #5555ff, -2px -2px 2px #ff5555;
+		color: white;
+	}
+	75% {
+		text-shadow: 2px -2px 2px #5555ff, -2px 2px 2px #ff5555;
+		color: #ffddee;
+	}
+}
+
+.rainbow-text {
+  color: var(--rainbow-color);
+}
+
+.deep-blue-text {
+  display: inline;
+  font-style: normal;
+  font-weight: 1000;
+  color: white;
+
+  filter: drop-shadow(1px 1px white) drop-shadow(0px 0px 1px white);
+  text-shadow: none;
+
+  background: linear-gradient(blue, navy);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }

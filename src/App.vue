@@ -5,14 +5,15 @@ import TabButtons from './components/TabButtons.vue';
 import { Currency, formatCurrencyGain } from './data/currencies';
 import { TABS } from './data/tabs';
 import { load, player, temp } from './main';
-import { format } from './utils/formats';
+import { format, formatTime } from './utils/formats';
 import { inNormalChallenge, NORMAL_CHALLENGES } from './data/challenges/normal-challenges';
-import InfinityGeneratorUnlock from './components/infinity-generators/InfinityGeneratorUnlock.vue';
 import { inInfinityChallenge } from './data/challenges/infinity-challenges';
 import DialogMain from './components/dialog/DialogMain.vue';
 import QuoteItem from './components/QuoteItem.vue';
 import PrimaryButton from './components/PrimaryButton.vue';
 import { INFINITY } from './data/infinity';
+import EternityPoints from './components/eternity/EternityPoints.vue';
+import NewsTicker from './components/NewsTicker.vue';
 
 const CT = computed(() => {
   if (player.infinity.reached) return;
@@ -40,10 +41,11 @@ load()
 </script>
 
 <template>
+  <NewsTicker />
   <div>
     <div class="topbar">
       <div>
-        <InfinityGeneratorUnlock v-if="player.infinity.break && player.infinity.generatorsUnlocked < 10" />
+        <EternityPoints />
       </div>
       <div>
         You have <h3 class="g--points">{{ format(player.points,0) }}</h3> {{ formatCurrencyGain(Currency.Points) }} points.
@@ -61,6 +63,8 @@ load()
   <TabButtons/>
   <component :is="TABS[player.tab].stabs[player.stab[player.tab]][0]"/>
   <div style="height: 100px;"></div>
+
+  <div id="session-time">Session Time: {{ formatTime(player.timePlayed) }}</div>
 
   <DialogMain />
   <QuoteItem />

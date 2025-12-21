@@ -9,9 +9,11 @@ import { toRaw } from "vue";
 import { notify } from "./notify";
 import { AchievementKeys, giveAchievement } from "@/data/achievements";
 import { Quotes } from "./quote";
+import { TimeStudies } from "@/data/timestudies";
+import { EternityUpgrades } from "@/data/eternity";
 
 const LOCALSTORAGE_NAME = "uninfinity-reborn-save";
-const VERSION = 1;
+const VERSION = 2;
 
 export type Save = {
   points: DecimalSource;
@@ -57,6 +59,39 @@ export type Save = {
       amount: DecimalSource;
       upgrades: DecimalSource[];
     };
+
+    autoGenerators: {
+      enabled: boolean, bulk: boolean,
+    }[],
+  };
+
+  eternity: {
+    time: number;
+    fastest: number;
+    times: DecimalSource;
+    points: DecimalSource;
+    upgrades: Record<string, DecimalSource>;
+
+    shards: DecimalSource;
+    generators: {
+      amount: DecimalSource;
+      bought: DecimalSource;
+    }[];
+
+    last10: {
+      time: number,
+      amount: DecimalSource,
+    }[],
+
+    fastInfinties: DecimalSource,
+    passiveTimes: number,
+
+    timestudy: {
+      theorems: DecimalSource,
+      p_theorems: DecimalSource[],
+      purchased: Record<string, boolean>,
+      respec: boolean,
+    },
   };
 
   challenges: {
@@ -87,6 +122,7 @@ export type Save = {
 
   first: {
     infinity: boolean;
+    eternity: boolean;
   };
 
   tab: number;
@@ -96,7 +132,13 @@ export type Save = {
   lastPlayed: number;
 
   achievements: Record<number, boolean>;
+  achRestrictions: {
+    a91: boolean,
+    a93: boolean,
+    a97: number,
+  };
   quotes: Record<string, boolean>;
+  news: string[];
 
   options: {
     notation: number;
@@ -145,6 +187,31 @@ export function getSaveData(): Save {
         amount: 0,
         upgrades: [],
       },
+
+      autoGenerators: [],
+    },
+
+    eternity: {
+      time: 0,
+      fastest: Number.MAX_VALUE,
+      times: 0,
+      points: 0,
+      upgrades: {},
+
+      shards: 0,
+      generators: [],
+
+      last10: [],
+
+      fastInfinties: 0,
+      passiveTimes: 0,
+
+      timestudy: {
+        theorems: 0,
+        p_theorems: [0,0,0],
+        purchased: {},
+        respec: false,
+      },
     },
 
     challenges: {
@@ -169,6 +236,7 @@ export function getSaveData(): Save {
 
     first: {
       infinity: false,
+      eternity: false,
     },
 
     automations: {},
@@ -182,6 +250,14 @@ export function getSaveData(): Save {
 
     achievements: {},
     quotes: {},
+
+    achRestrictions: {
+      a91: true,
+      a93: true,
+      a97: 0,
+    },
+
+    news: [],
 
     options: {
       notation: 2,
@@ -197,11 +273,16 @@ export function getSaveData(): Save {
   for (let i = 1; i <= 10; i++) {
     S.generators[i] = { amount: 0, bought: 0, additionalCost: 1, additionalBought: 0, };
     S.infinity.generators[i] = { amount: 0, bought: 0 };
+    S.eternity.generators[i] = { amount: 0, bought: 0 };
 
     S.autoGenerators[i] = { enabled: true, bulk: false };
+    S.infinity.autoGenerators[i] = { enabled: true, bulk: false };
   }
   for (const i in InfinityUpgrades) S.infinity.upgrades[i] = 0;
   for (const i in InfinityEnergy.upgrades) S.infinity.energy.upgrades[i] = 0;
+
+  for (const i in EternityUpgrades) S.eternity.upgrades[i] = 0;
+  for (const TS of TimeStudies) if (TS.type !== 'invisible') S.eternity.timestudy.purchased[TS.id] = false;
 
   for (const i of AchievementKeys) S.achievements[i] = false;
   for (const i of Object.keys(Quotes)) S.quotes[i] = false;
@@ -257,6 +338,12 @@ export function deepAssign(target: DeepObject, data: DeepObject) {
     else if (v !== undefined) target[k] = v;
   }
 }
+export function forceDeepAssign(target: DeepObject, data: DeepObject) {
+  for (const [k, v] of Object.entries(data)) {
+    if (target[k] === undefined) target[k] = v;
+    else if (v !== undefined) target[k] = v;
+  }
+}
 
 export function loadSave(): Save {
   const data = localStorage.getItem(LOCALSTORAGE_NAME);
@@ -295,7 +382,7 @@ export function saveFile() {
   window.URL = window.URL || window.webkitURL;
   const a = document.createElement("a")
   a.href = window.URL.createObjectURL(file)
-  a.download = "DIR - "+new Date().toString()+".txt"
+  a.download = "The Uninfinity - "+new Date().toString()+".txt"
   a.click()
 }
 
@@ -304,8 +391,9 @@ function attemptImport(data: string | null) {
     try {
       const new_player = getSaveData()
       deepAssign(new_player, JSON.parse(atob(data)))
-      deepAssign(player, new_player);
+      forceDeepAssign(player, new_player);
 
+      checkPlayer()
       checkTab()
 
       resetTemp()
@@ -344,12 +432,9 @@ export function importy() {
 
 export function wipe() {
   if(confirm(`Are you sure you want to wipe your save?`)) {
-
-    player.challenges.normal.fastest = new Array(12).fill(Number.MAX_VALUE)
-    player.challenges.infinity.fastest = new Array(8).fill(Number.MAX_VALUE)
     state.flux_speed = 1;
 
-    deepAssign(player, getSaveData())
+    forceDeepAssign(player, getSaveData())
     player.stab = player.stab.map(() => 0)
 
     checkTab()
@@ -365,6 +450,10 @@ export function checkPlayer() {
 
   if (offline_time >= 3600 * 8) giveAchievement(38);
   player.flux.amount += offline_time
+
+  if (player._VERSION < 2) {
+    player.eternity.time = player.timePlayed;
+  }
 
   player.lastPlayed = date
   player._VERSION = VERSION

@@ -8,6 +8,8 @@ import { inNormalChallenge } from "./challenges/normal-challenges";
 import { INFINITY } from "./infinity";
 import { INF_GENERATOR } from "./generators/infinity-generators";
 import { INF_CHALLENGES, inInfinityChallenge } from "./challenges/infinity-challenges";
+import { ETERNITY } from "./eternity";
+import { TIME_GENERATOR } from "./generators/time-generators";
 
 export interface CurrencyData {
   name: string;
@@ -20,6 +22,9 @@ export enum Currency {
   InfinityPoints = "infinity",
   InfinityPower = "infinity-power",
   InfinityEnergy = "infinity-energy",
+  EternityPoints = "eternity",
+  TimeShards = "time-shards",
+  TimeTheorems = "time-theorems",
 }
 
 export const CURRENCIES: Record<Currency, CurrencyData> = {
@@ -91,6 +96,54 @@ export const CURRENCIES: Record<Currency, CurrencyData> = {
     set amount(v) { player.infinity.energy.amount = v },
 
     gain: 0,
+    passive: 0,
+  },
+  eternity: {
+    name: "Eternity Points",
+
+    get amount() { return player.eternity.points },
+    set amount(v) {
+      player.eternity.points = v
+    },
+
+    get gain() {
+      if (!ETERNITY.reached) return 0;
+
+      let x = Decimal.log10(player.infinity.points).div(308).sub(.7).pow_base(5)
+
+      x = x.mul(ETERNITY.totalEPMultiplier)
+
+      return x.floor()
+    },
+
+    passive: 0,
+  },
+  "time-shards": {
+    name: "Time Shards",
+
+    get amount() { return player.eternity.shards },
+    set amount(v) {
+      player.eternity.shards = v
+    },
+
+    get gain() {
+      const G = TIME_GENERATOR(1), x = Decimal.mul(G.amount, G.temp.mult)
+
+      return x
+    },
+
+    passive: 1,
+  },
+  "time-theorems": {
+    name: "Time Theorems",
+
+    get amount() { return player.eternity.timestudy.theorems },
+    set amount(v) {
+      player.eternity.timestudy.theorems = v
+    },
+
+    gain: 0,
+
     passive: 0,
   },
 }

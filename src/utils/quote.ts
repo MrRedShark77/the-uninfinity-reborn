@@ -122,6 +122,25 @@ export const Quotes: Record<string, QuoteData> = {
       `COME TO THAT GUY!`,
     ],
   },
+  eternity: {
+    role: "eternity",
+    lines: [
+      {text: `...`, hide_name: true},
+      {text: `HOW DARE YOU ARE DOING?`, role: "infinity"},
+      {text: `...`, hide_name: true},
+      {text: `Fine...`, hide_name: true},
+      {text: `I am <b>Eternity</b>.`, hide_name: true},
+      `I am manipulating time.`,
+      {text: `You cannot have the ability, liar.`, role: "infinity"},
+      `Ok, I’m only meaning of infinite time.`,
+      `There are some <b>Time Generators</b> which generate <b>Time Shards</b> that increase effective tickspeed upg...`,
+      {text: `Are you from the other game?`, role: "infinity"},
+      `I never heard that before…`,
+      {text: `SHUT UP, stupid!`, role: "infinity"},
+      `Sorry about it, so you can buy <b>Eternity Upgrades</b> and <b>Time Studies</b> to progress further...`,
+      `Here we go...`,
+    ],
+  },
 }
 
 export const Quote = {

@@ -2,8 +2,9 @@ import { player, temp } from "@/main"
 import Decimal, { type DecimalSource } from "break_eternity.js"
 import { CURRENCIES, Currency } from "./currencies";
 import { format, formatMult, formatPlus, formatPow } from "@/utils/formats";
-import { DC, simpleCost, sumBase } from "@/utils/decimal";
+import { DC, simpleCost, softcap, sumBase } from "@/utils/decimal";
 import { Quote } from "@/utils/quote";
+import { getTimeStudyEffect } from "./timestudies";
 
 type InfinityEnergyUpgrade = {
   description: string;
@@ -29,9 +30,11 @@ export const InfinityEnergy = {
   effect() {
     const amount = player.infinity.energy.amount;
 
-    const exp = Decimal.add(.1, infinityEnergyUpgradeEffect(2,0))
+    const exp = Decimal.add(.1, infinityEnergyUpgradeEffect(2,0)).mul(getTimeStudyEffect(21))
 
-    const mult = Decimal.mul(amount, 10).add(1).pow(exp).mul(Decimal.add(amount, 2).log2().sqr())
+    let mult = Decimal.mul(amount, 10).add(1).pow(exp).mul(Decimal.add(amount, 2).log2().sqr())
+
+    mult = softcap(mult, DC.DE308, .5, "E")
 
     return { mult }
   },
@@ -46,13 +49,20 @@ export const InfinityEnergy = {
     return x
   },
   get exponent() {
-    const x = infinityEnergyUpgradeEffect(1)
+    let x = infinityEnergyUpgradeEffect(1)
+
+    x = Decimal.add(x, getTimeStudyEffect(102))
+
+    x = x.mul(getTimeStudyEffect(22))
+    .mul(getTimeStudyEffect(131)).mul(getTimeStudyEffect(132)).mul(getTimeStudyEffect(133))
 
     return x
   },
 
   calc(amount: DecimalSource, offest: DecimalSource): Decimal {
     const exp = this.exponent
+
+    if (exp.lte(0)) return amount as Decimal;
 
     let x = Decimal.root(amount, exp)
 
@@ -129,7 +139,7 @@ export const InfinityEnergy = {
     if (Decimal.gte(C.amount, cost = U.cost(A))) {
       let bulk = Decimal.add(A, 1)
       if (max) cost = U.cost(bulk = bulk.max(U.bulk(C.amount)));
-      C.amount = Decimal.sub(C.amount, cost).max(0)
+      if (Decimal.lt(player.eternity.times, 40)) C.amount = Decimal.sub(C.amount, cost).max(0);
       player.infinity.energy.upgrades[i] = bulk;
 
       // this.temp()

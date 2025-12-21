@@ -1,11 +1,12 @@
 import type { DecimalSource } from "break_eternity.js";
 import { player, temp } from "./main";
-import { copySave, save, type Save } from "./utils/saveload";
+import { copySave, deepAssign, save, type Save } from "./utils/saveload";
 import Decimal from "break_eternity.js";
 import { D, softcap, scale, scaleAll, expPow, sumBase, simpleCost } from "./utils/decimal";
 import { calc } from "./update";
 import { notify } from "./utils/notify";
 import { Quote } from "./utils/quote";
+import { respecTimeStudies } from "./data/timestudies";
 
 declare global {
   interface Window {
@@ -20,6 +21,7 @@ declare global {
 }
 
 const Q = (s: string) => Quote.addFromKeys(s, true)
+const respecTS = (b: boolean) => respecTimeStudies(b);
 
 if (import.meta.env.DEV) {
   window.player = player;
@@ -31,6 +33,6 @@ if (import.meta.env.DEV) {
   }
 
   window.dev = {
-    save, calc, temp, copySave, notify, Q
+    save, calc, temp, copySave, notify, Q, respecTS, deepAssign
   }
 }

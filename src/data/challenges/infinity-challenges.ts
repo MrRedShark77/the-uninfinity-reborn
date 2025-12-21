@@ -105,6 +105,7 @@ export function checkICUnlocks() {
 
   if (C !== undefined && Decimal.gte(player.points, C.require)) {
     player.challenges.infinity.unlocked++;
-    notify("You unlock a new Infinity Challenge!","success")
+    if (Decimal.gte(player.eternity.times, 6)) player.challenges.infinity.completedBits += 1 << player.challenges.infinity.unlocked;
+    else notify("You unlocked a new Infinity Challenge!","success");
   }
 }

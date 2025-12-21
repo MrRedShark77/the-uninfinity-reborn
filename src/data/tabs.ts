@@ -12,6 +12,11 @@ import OptionsTab from "@/components/OptionsTab.vue";
 import AchievementsTab from "@/components/AchievementsTab.vue";
 import InfinityPreStab from "@/components/infinity/InfinityPreStab.vue";
 import FluxTab from "@/components/FluxTab.vue";
+import TimeStudiesTab from "@/components/eternity/TimeStudiesTab.vue";
+import EternityUpgradesTab from "@/components/eternity/EternityUpgradesTab.vue";
+import EternityMilestonesTab from "@/components/eternity/EternityMilestonesTab.vue";
+import EternityPreStab from "@/components/eternity/EternityPreStab.vue";
+import TimeGeneratorsTab from "@/components/time-generators/TimeGeneratorsTab.vue";
 
 export const TABS: {
   name: string;
@@ -26,7 +31,8 @@ export const TABS: {
 
     stabs: [
       [GeneratorsTab, "Normal Generators"],
-      [InfinityGeneratorsTab, "Infinity Generators", () => player.infinity.break],
+      [InfinityGeneratorsTab, "Infinity Generators", () => player.first.eternity || player.infinity.break],
+      [TimeGeneratorsTab, "Time Generators", () => player.first.eternity],
     ],
   },{
     name: 'Time Circuits',
@@ -66,7 +72,7 @@ export const TABS: {
 
     stabs: [
       [ChallengesTab, "Normal Challenges"],
-      [InfinityChallengesTab, "Infinity Challenges", () => player.infinity.break],
+      [InfinityChallengesTab, "Infinity Challenges", () => player.first.eternity || player.infinity.break],
     ],
   },{
     condition: () => player.first.infinity,
@@ -84,6 +90,23 @@ export const TABS: {
       [InfinityUpgradesTab, "Infinity Upgrades"],
       [BreakInfinityTab, "Break Infinity"],
       [InfinityEnergyTab, "Infinity Energy"],
+    ],
+  },{
+    condition: () => player.first.eternity,
+    name: "Eternity",
+
+    class: {
+      'g--eternity-button': true,
+    },
+    style: {
+      color: "#b341e0",
+    },
+
+    pre_stab: EternityPreStab,
+    stabs: [
+      [TimeStudiesTab, "Time Studies"],
+      [EternityUpgradesTab, "Eternity Upgrades"],
+      [EternityMilestonesTab, "Eternity Milestones"],
     ],
   },
 ]
