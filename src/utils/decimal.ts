@@ -12,9 +12,11 @@ export const DC = {
   DE100: D(1e100),
 
   DE308: Decimal.dNumberMax,
-  DINF: Decimal.dInf,
-
   DE308LOG: Decimal.dNumberMax.log10(),
+
+  DE19728: Decimal.pow(2, 65536),
+
+  DINF: Decimal.dInf,
 }
 
 type ScaleMode = "L" | "P" | "E1" | "E2" | "ME1" | "ME2" | "D";

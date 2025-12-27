@@ -8,6 +8,7 @@ import { ETERNITY } from '@/data/eternity';
 import { Quote } from '@/utils/quote';
 import { INF_GENERATOR_REQUIREMENTS } from '@/data/generators/infinity-generators';
 import { computed } from 'vue';
+import { getECGoal, inEternitychallenge } from '@/data/challenges/eternity-challenges';
 
 const reached = computed(() => {
   const U = INF_GENERATOR_REQUIREMENTS[player.infinity.generatorsUnlocked]
@@ -38,15 +39,18 @@ const unlock = () => {
     </template><template v-else>
       <PrimaryButton class="g--eternity-button" :enabled="ETERNITY.reached" @click="ETERNITY.eternity()">
         <div v-if="ETERNITY.reached">
-          <div v-if="player.first.eternity">
+          <div v-if="inEternitychallenge(0) && player.first.eternity">
             Eternity for <b style="color: white;">{{ format(temp.currencies.eternity,0) }}</b> EP<br>
             Current: <b style="color: white;">{{ format(Decimal.div(temp.currencies.eternity,player.eternity.time).mul(60).round(),0) }} EP/min</b>
           </div>
-          <div v-else>
+          <div v-else-if="inEternitychallenge(0)">
             Other times await...<br>I need to become Eternal
           </div>
+          <div v-else>
+            Other challenges await...<br>I need to become Eternal
+          </div>
         </div>
-        <div v-else>Reach <b>{{ format(DC.DE308) }}</b> Infinity Points</div>
+        <div v-else>Reach <b>{{ format(inEternitychallenge(0) ? DC.DE308 : getECGoal(player.challenges.eternity.current)) }}</b> Infinity Points</div>
       </PrimaryButton>
     </template>
   </div>

@@ -9,11 +9,12 @@ import { toRaw } from "vue";
 import { notify } from "./notify";
 import { AchievementKeys, giveAchievement } from "@/data/achievements";
 import { Quotes } from "./quote";
-import { TimeStudies } from "@/data/timestudies";
 import { EternityUpgrades } from "@/data/eternity";
+import Decimal from "break_eternity.js";
+import { respecTimeStudies } from "@/data/timestudies";
 
 const LOCALSTORAGE_NAME = "uninfinity-reborn-save";
-const VERSION = 2;
+const VERSION = 3;
 
 export type Save = {
   points: DecimalSource;
@@ -33,17 +34,18 @@ export type Save = {
   infinity: {
     reached: boolean;
     break: boolean;
-    time: number;
-    fastest: number;
+    time: DecimalSource;
+    fastest: DecimalSource;
     times: DecimalSource;
+    banked: DecimalSource;
     points: DecimalSource;
     upgrades: Record<string, DecimalSource>;
 
-    passive: number,
-    passiveTimes: number,
+    passive: DecimalSource,
+    passiveTimes: DecimalSource,
 
     last10: {
-      time: number,
+      time: DecimalSource,
       amount: DecimalSource,
     }[],
 
@@ -66,8 +68,8 @@ export type Save = {
   };
 
   eternity: {
-    time: number;
-    fastest: number;
+    time: DecimalSource;
+    fastest: DecimalSource;
     times: DecimalSource;
     points: DecimalSource;
     upgrades: Record<string, DecimalSource>;
@@ -79,25 +81,30 @@ export type Save = {
     }[];
 
     last10: {
-      time: number,
+      time: DecimalSource,
       amount: DecimalSource,
     }[],
 
     fastInfinties: DecimalSource,
-    passiveTimes: number,
+    passiveTimes: DecimalSource,
 
     timestudy: {
       theorems: DecimalSource,
       p_theorems: DecimalSource[],
-      purchased: Record<string, boolean>,
+      purchased: (number | string)[],
       respec: boolean,
+
+      presets: {
+        id: string,
+        value: number[],
+      }[],
     },
   };
 
   challenges: {
     normal: {
       current: number,
-      fastest: number[],
+      fastest: DecimalSource[],
       completedBits: number,
 
       C1: DecimalSource,
@@ -107,11 +114,19 @@ export type Save = {
     infinity: {
       unlocked: number,
       current: number,
-      fastest: number[],
+      fastest: DecimalSource[],
       completedBits: number,
 
       C4: number,
     };
+    eternity: {
+      unlockedBits: number,
+      current: number,
+      fastest5: DecimalSource[],
+      completed: number[],
+
+      C8: [number, number],
+    },
   };
 
   automations: Record<string, Automation>,
@@ -128,7 +143,8 @@ export type Save = {
   tab: number;
   stab: number[];
 
-  timePlayed: number;
+  timePlayed: DecimalSource;
+  realTimePlayed: number;
   lastPlayed: number;
 
   achievements: Record<number, boolean>;
@@ -136,6 +152,8 @@ export type Save = {
     a91: boolean,
     a93: boolean,
     a97: number,
+    a101: number,
+    a112: boolean,
   };
   quotes: Record<string, boolean>;
   news: string[];
@@ -170,6 +188,7 @@ export function getSaveData(): Save {
       fastest: Number.MAX_VALUE,
 
       times: 0,
+      banked: 0,
       points: 0,
       upgrades: {},
 
@@ -209,8 +228,10 @@ export function getSaveData(): Save {
       timestudy: {
         theorems: 0,
         p_theorems: [0,0,0],
-        purchased: {},
+        purchased: [],
         respec: false,
+
+        presets: [],
       },
     },
 
@@ -232,6 +253,14 @@ export function getSaveData(): Save {
 
         C4: 0,
       },
+      eternity: {
+        unlockedBits: 0,
+        current: 0,
+        fastest5: new Array(12).fill(Number.MAX_VALUE),
+        completed: new Array(12+1).fill(0),
+
+        C8: [50, 50],
+      },
     },
 
     first: {
@@ -246,6 +275,7 @@ export function getSaveData(): Save {
     stab: [0,0,0,0,0],
 
     timePlayed: 0,
+    realTimePlayed: 0,
     lastPlayed: Date.now(),
 
     achievements: {},
@@ -255,6 +285,8 @@ export function getSaveData(): Save {
       a91: true,
       a93: true,
       a97: 0,
+      a101: 0,
+      a112: true,
     },
 
     news: [],
@@ -282,7 +314,6 @@ export function getSaveData(): Save {
   for (const i in InfinityEnergy.upgrades) S.infinity.energy.upgrades[i] = 0;
 
   for (const i in EternityUpgrades) S.eternity.upgrades[i] = 0;
-  for (const TS of TimeStudies) if (TS.type !== 'invisible') S.eternity.timestudy.purchased[TS.id] = false;
 
   for (const i of AchievementKeys) S.achievements[i] = false;
   for (const i of Object.keys(Quotes)) S.quotes[i] = false;
@@ -453,6 +484,18 @@ export function checkPlayer() {
 
   if (player._VERSION < 2) {
     player.eternity.time = player.timePlayed;
+    if (player.generators.some((x,i) => i > 0 && i < 10 && Decimal.gte(x.bought, 1))) player.achRestrictions.a91 = false;
+    if (player.infinity.generators.some((x,i) => i > 0 && Decimal.gte(x.bought, 1))) player.achRestrictions.a93 = false;
+  }
+
+  if (player._VERSION < 3) {
+    player.realTimePlayed = Number(player.timePlayed);
+    if (player.generators.some((x,i) => i > 1 && Decimal.gte(x.bought, 1))) player.achRestrictions.a112 = false;
+
+    if (player.first.eternity) {
+      respecTimeStudies()
+      notify("Time Study is automatically respeced for technical reason!","warn")
+    }
   }
 
   player.lastPlayed = date

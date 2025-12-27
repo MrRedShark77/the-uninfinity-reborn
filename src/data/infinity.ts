@@ -6,11 +6,12 @@ import Decimal from "break_eternity.js";
 import { REFINER } from "./generators/normal-generators";
 import { completeNormalChallenge, getNCCompletions, inNormalChallenge } from "./challenges/normal-challenges";
 import { completeInfinityChallenge, INF_CHALLENGES, inInfinityChallenge } from "./challenges/infinity-challenges";
-import { getAchievementEffect, giveAchievement } from "./achievements";
+import { getAchievementEffect, giveAchievement, hasAchievement } from "./achievements";
 import { infinityEnergyUpgradeEffect } from "./infinity-energy";
 import { Quote } from "@/utils/quote";
 import { CURRENCIES } from "./currencies";
 import { getTimeStudyEffect, hasTimeStudy } from "./timestudies";
+import { failEternityChallenge, getECCompletions, inEternitychallenge } from "./challenges/eternity-challenges";
 
 export enum InfinityUpgrade {
   TimeMult = 'timeMult',
@@ -95,35 +96,35 @@ export const InfinityUpgrades: Record<string, {
   "genMult1": {
     description: "Increases the 1st and 10th generators based on infinities.",
     cost: 1,
-    effect: () => Decimal.div(player.infinity.times,5).add(1).pow(getTimeStudyEffect(31)),
+    effect: () => Decimal.div(INFINITY.totalInfinities,5).add(1).pow(getTimeStudyEffect(31)),
     display: x => formatMult(x),
   },
   "genMult2": {
     condition: () => hasInfinityUpgrade('genMult1'),
     description: "Increases the 2nd and 9th generators based on infinities.",
     cost: 1,
-    effect: () => Decimal.div(player.infinity.times,5).add(1).pow(getTimeStudyEffect(31)),
+    effect: () => Decimal.div(INFINITY.totalInfinities,5).add(1).pow(getTimeStudyEffect(31)),
     display: x => formatMult(x),
   },
   "genMult3": {
     condition: () => hasInfinityUpgrade('genMult2'),
     description: "Increases the 3rd and 8th generators based on infinities.",
     cost: 1,
-    effect: () => Decimal.div(player.infinity.times,5).add(1).pow(getTimeStudyEffect(31)),
+    effect: () => Decimal.div(INFINITY.totalInfinities,5).add(1).pow(getTimeStudyEffect(31)),
     display: x => formatMult(x),
   },
   "genMult4": {
     condition: () => hasInfinityUpgrade('genMult3'),
     description: "Increases the 4th and 7th generators based on infinities.",
     cost: 1,
-    effect: () => Decimal.div(player.infinity.times,5).add(1).pow(getTimeStudyEffect(31)),
+    effect: () => Decimal.div(INFINITY.totalInfinities,5).add(1).pow(getTimeStudyEffect(31)),
     display: x => formatMult(x),
   },
   "genMult5": {
     condition: () => hasInfinityUpgrade('genMult4'),
     description: "Increases the 5th and 6th generators based on infinities.",
     cost: 1,
-    effect: () => Decimal.div(player.infinity.times,5).add(1).pow(getTimeStudyEffect(31)),
+    effect: () => Decimal.div(INFINITY.totalInfinities,5).add(1).pow(getTimeStudyEffect(31)),
     display: x => formatMult(x),
   },
 
@@ -162,7 +163,7 @@ export const InfinityUpgrades: Record<string, {
   "passiveGen": {
     description: "Passively generates infinity points based on your fastest infinity.",
     cost: 10,
-    display: () => format(INFINITY.totalIPMultiplier,0) + " IP every " + formatTime(player.infinity.fastest * 10),
+    display: () => format(INFINITY.totalIPMultiplier,0) + " IP every " + formatTime(Decimal.mul(player.infinity.fastest, 10)),
   },
 
   "ipMult": {
@@ -171,8 +172,20 @@ export const InfinityUpgrades: Record<string, {
     max: DC.DINF,
     description: "Gain ×2 more IP.",
 
-    cost: x => Decimal.pow10(x).mul(10),
-    bulk: x => Decimal.div(x,10).log10().floor().add(1),
+    cost(x) {
+      let y = Decimal.pow(10, x).mul(10).log10()
+
+      if (y.gte(1e6)) y = y.pow(2).div(1e6);
+
+      return y.pow10()
+    },
+    bulk(x) {
+      let y = Decimal.log10(x)
+
+      if (y.gte(1e6)) y = y.mul(1e6).root(2);
+
+      return y.pow10().div(10).log(10).floor().add(1)
+    },
 
     effect: x => Decimal.pow(2, x),
     display: x => formatMult(x,0),
@@ -192,7 +205,7 @@ export const InfinityUpgrades: Record<string, {
     condition: () => true,
     description: `All Generators are powered based on infinities.`,
     cost: 1e5,
-    effect: () => Decimal.sqr(player.infinity.times).div(100).add(1).pow(getTimeStudyEffect(31)),
+    effect: () => Decimal.sqr(INFINITY.totalInfinities).div(100).add(1).pow(getTimeStudyEffect(31)),
     display: x => formatMult(x),
   },
   "currentOomMult": {
@@ -207,18 +220,18 @@ export const InfinityUpgrades: Record<string, {
     description: `All Generators are powered based on the slowest challenge run.`,
     cost: 1e7,
     effect: () => {
-      let x = 0
+      let x = DC.D0
 
-      player.challenges.normal.fastest.forEach(y => {x = Math.max(x, y)})
+      player.challenges.normal.fastest.forEach(y => {x = Decimal.max(x, y)})
 
-      return Decimal.div(3000, Math.max(x,.1)).max(1)
+      return Decimal.div(3000, Decimal.max(x,.1)).max(1)
     },
     display: x => formatMult(x),
   },
   "timesGen": {
     description: "Passively generates Infinitied stat based on your fastest infinity.",
     cost: 2.5e7,
-    display: () => format(temp.infinity.infinities_gain, 0) + " Infinities every " + formatTime(player.infinity.fastest * 5),
+    display: () => format(temp.infinity.infinities_gain, 0) + " Infinities every " + formatTime(Decimal.mul(player.infinity.fastest, 5)),
   },
   "currentMult2": {
     condition: () => true,
@@ -334,10 +347,13 @@ export const INFINITY = {
 
     const gain = player.infinity.break ? CURRENCIES.infinity.gain : this.totalIPMultiplier
 
+    player.achRestrictions.a101 += +Decimal.div(gain, player.infinity.points).gte(DC.DE308);
+    if (player.achRestrictions.a101 >= 10) giveAchievement(101);
+
     player.infinity.points = Decimal.add(player.infinity.points, gain);
     player.infinity.times = Decimal.add(player.infinity.times, temp.infinity.infinities_gain);
-    player.infinity.fastest = Math.min(player.infinity.fastest, player.infinity.time)
-    player.eternity.fastInfinties = Decimal.clampMin(player.eternity.fastInfinties, Decimal.div(temp.infinity.infinities_gain, Math.max(player.infinity.fastest, .025)))
+    player.infinity.fastest = Decimal.min(player.infinity.fastest, player.infinity.time)
+    player.eternity.fastInfinties = Decimal.clampMin(player.eternity.fastInfinties, Decimal.div(temp.infinity.infinities_gain, Decimal.max(player.infinity.fastest, .025)))
     player.first.infinity = true
 
     player.infinity.last10.push({
@@ -352,16 +368,24 @@ export const INFINITY = {
     if (!inNormalChallenge(0)) completeNormalChallenge();
     if (!inInfinityChallenge(0)) completeInfinityChallenge();
 
+    player.challenges.normal.C2 = .01;
+    player.challenges.normal.C10 = 0;
+
     giveAchievement(31)
-    if (player.infinity.time <= 7200) giveAchievement(35);
-    if (player.infinity.time <= 600) giveAchievement(44);
-    if (player.infinity.time <= 60) giveAchievement(45);
-    if (player.infinity.time <= .25) giveAchievement(68);
+    if (Decimal.lte(player.infinity.time, 7200)) giveAchievement(35);
+    if (Decimal.lte(player.infinity.time, 600)) giveAchievement(44);
+    if (Decimal.lte(player.infinity.time, 60)) giveAchievement(45);
+    if (Decimal.lte(player.infinity.time, .25)) giveAchievement(68);
 
     if (Decimal.lte(temp.refiner_boost, 100)) giveAchievement(36);
     if (Decimal.lt(player.generators[10].bought, 1)) giveAchievement(37);
 
     Quote.addFromKeys('infinity');
+
+    if (inEternitychallenge(4) && Decimal.gt(player.infinity.times, 8 - 2 * Math.min(getECCompletions(4)))) {
+      failEternityChallenge()
+      return
+    }
 
     this.reset()
   },
@@ -392,20 +416,34 @@ export const INFINITY = {
 
     x = Decimal.mul(x, infinityUpgradeEffect(InfinityUpgrade.IPMult))
 
-    x = x.mul(getAchievementEffect(42)).mul(getAchievementEffect(81)).mul(getAchievementEffect(85))
+    x = x.mul(getAchievementEffect(42)).mul(getAchievementEffect(81)).mul(getAchievementEffect(85)).mul(getAchievementEffect(107))
 
-    x = x.mul(getTimeStudyEffect(41)).mul(getTimeStudyEffect(51)).pow(getTimeStudyEffect(111))
-    .mul(getTimeStudyEffect(141)).mul(getTimeStudyEffect(142)).mul(getTimeStudyEffect(143))
+    x = x.mul(getTimeStudyEffect(41)).mul(getTimeStudyEffect(51)).mul(getTimeStudyEffect(141)).mul(getTimeStudyEffect(142)).mul(getTimeStudyEffect(143))
+
+    x = x.pow(getTimeStudyEffect(111)).pow(getAchievementEffect(102))
 
     return x
   },
 
   get infinitiesGain(): DecimalSource {
+    if (inEternitychallenge(4)) return 1;
+
     let x = DC.D1
 
     x = x.mul(infinityEnergyUpgradeEffect(5, 1)).mul(getTimeStudyEffect(32))
     x = x.mul(getAchievementEffect(62)).mul(getAchievementEffect(92))
 
     return x.max(1).round()
+  },
+
+  get totalInfinities(): DecimalSource { return Decimal.add(player.infinity.times, player.infinity.banked) },
+
+  bankInfinities() {
+    let percent = 0
+
+    if (hasTimeStudy(211)) percent += .05;
+    if (hasAchievement(121)) percent += .05;
+
+    player.infinity.banked = Decimal.mul(player.infinity.times, percent).add(player.infinity.banked)
   },
 }

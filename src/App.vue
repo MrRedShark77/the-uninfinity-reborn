@@ -14,6 +14,8 @@ import PrimaryButton from './components/PrimaryButton.vue';
 import { INFINITY } from './data/infinity';
 import EternityPoints from './components/eternity/EternityPoints.vue';
 import NewsTicker from './components/NewsTicker.vue';
+import { inEternitychallenge } from './data/challenges/eternity-challenges';
+import { ETERNITY } from './data/eternity';
 
 const CT = computed(() => {
   if (player.infinity.reached) return;
@@ -22,6 +24,7 @@ const CT = computed(() => {
 
   if (!inNormalChallenge(0)) h.push(`"${NORMAL_CHALLENGES[player.challenges.normal.current].name}" Challenge`);
   if (!inInfinityChallenge(0)) h.push(`IC${player.challenges.infinity.current}`);
+  if (!inEternitychallenge(0)) h.push(`EC${player.challenges.eternity.current}`);
 
   return "You are currently in " + (h.length === 0 ? "the Normal Universe" : h.join(", "))
 })
@@ -34,6 +37,10 @@ function exitChallenge() {
   else if (!inInfinityChallenge(0)) {
     player.challenges.infinity.current = 0;
     INFINITY.reset()
+  }
+  else if (!inEternitychallenge(0)) {
+    player.challenges.eternity.current = 0;
+    ETERNITY.reset()
   }
 }
 
@@ -64,7 +71,10 @@ load()
   <component :is="TABS[player.tab].stabs[player.stab[player.tab]][0]"/>
   <div style="height: 100px;"></div>
 
-  <div id="session-time">Session Time: {{ formatTime(player.timePlayed) }}</div>
+  <div id="session-time">
+    Session Time: {{ formatTime(player.realTimePlayed) }}<br>
+    Game Time: {{ formatTime(player.timePlayed) }}
+  </div>
 
   <DialogMain />
   <QuoteItem />

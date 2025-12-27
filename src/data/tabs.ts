@@ -12,11 +12,13 @@ import OptionsTab from "@/components/OptionsTab.vue";
 import AchievementsTab from "@/components/AchievementsTab.vue";
 import InfinityPreStab from "@/components/infinity/InfinityPreStab.vue";
 import FluxTab from "@/components/FluxTab.vue";
-import TimeStudiesTab from "@/components/eternity/TimeStudiesTab.vue";
+import TimeStudiesTab from "@/components/time-study/TimeStudiesTab.vue";
 import EternityUpgradesTab from "@/components/eternity/EternityUpgradesTab.vue";
 import EternityMilestonesTab from "@/components/eternity/EternityMilestonesTab.vue";
 import EternityPreStab from "@/components/eternity/EternityPreStab.vue";
 import TimeGeneratorsTab from "@/components/time-generators/TimeGeneratorsTab.vue";
+import { isECsUnlocked } from "./challenges/eternity-challenges";
+import EternityChallengesTab from "@/components/challenges/EternityChallengesTab.vue";
 
 export const TABS: {
   name: string;
@@ -26,7 +28,7 @@ export const TABS: {
   pre_stab?: Component;
   stabs: [Component, string?, (() => boolean)?][];
 }[] = [
-  {
+  { // 0
     name: "Generators",
 
     stabs: [
@@ -66,13 +68,14 @@ export const TABS: {
     stabs: [
       [AutomationsTab],
     ],
-  },{
+  },{ // 5
     condition: () => player.first.infinity,
     name: "Challenges",
 
     stabs: [
       [ChallengesTab, "Normal Challenges"],
       [InfinityChallengesTab, "Infinity Challenges", () => player.first.eternity || player.infinity.break],
+      [EternityChallengesTab, "Eternity Challenges", isECsUnlocked],
     ],
   },{
     condition: () => player.first.infinity,

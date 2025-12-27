@@ -1,6 +1,6 @@
 import { player, temp } from "@/main";
 import { resetTemp, type GeneratorTemp } from "@/update";
-import { D, DC } from "@/utils/decimal";
+import { D, DC, expPow } from "@/utils/decimal";
 import type { DecimalSource } from "break_eternity.js";
 import Decimal from "break_eternity.js";
 import { hasInfinityUpgrade, InfinityUpgrade, infinityUpgradeEffect, simpleInfinityEffect } from "../infinity";
@@ -8,6 +8,7 @@ import { inNormalChallenge, isNCBeaten } from "../challenges/normal-challenges";
 import { inInfinityChallenge, isICBeaten } from "../challenges/infinity-challenges";
 import { getAchievementEffect, giveAchievement, hasAchievement } from "../achievements";
 import { getTimeStudyEffect, hasTimeStudy } from "../timestudies";
+import { getECCompletions, getECReward, inEternitychallenge } from "../challenges/eternity-challenges";
 
 const GENERATOR_PREFIXES = ['Mono-',"Kilo-","Mega-","Giga-","Tera-","Peta-","Exa-","Zetta-","Yotta-","Ronna-","Quetta-"]
 
@@ -31,7 +32,7 @@ export const GENERATOR = (i: number) => ({
   temp: temp.generators[i],
 
   get base() {
-    if (inInfinityChallenge(7) || inInfinityChallenge(8)) return 1;
+    if (inInfinityChallenge(7) || inInfinityChallenge(8) || inEternitychallenge(6) || inEternitychallenge(7) || inEternitychallenge(10)) return 1;
     if (inInfinityChallenge(3)) return Decimal.mul(this.bought, player.expanders).div(1e5).add(1);
 
     let m = D(.1)
@@ -43,6 +44,7 @@ export const GENERATOR = (i: number) => ({
 
     m = m.mul(simpleInfinityEffect(InfinityUpgrade.CurrentOoMMult))
     if (hasInfinityUpgrade(InfinityUpgrade.OoMMultBoost)) m = m.mul(1.5);
+    m = m.mul(getECReward(3))
 
     m = m.mul(i).add(1).mul(temp.generator_oom_mult)
 
@@ -76,7 +78,12 @@ export const GENERATOR = (i: number) => ({
   COST(l) {
     let x = Decimal.add(l, player.generators[i].additionalBought).pow_base(this.COST_INC).mul(this.COST_BASE).log10()
 
-    if (x.gt(308)) x = x.div(308).sub(1).mul(temp.generator_scale_power).pow_base(2).mul(x);
+    if (x.gt(308)) {
+      const pre_x = x;
+      x = x.div(308).sub(1).mul(temp.generator_scale_power)
+      if (getECCompletions(5) > 0 && i === 10) x = x.add(1).pow(3).mul(308);
+      else x = x.pow_base(2).mul(pre_x);
+    };
 
     return x.pow10().mul(player.generators[i].additionalCost)
   },
@@ -91,8 +98,12 @@ export const GENERATOR = (i: number) => ({
 
     // d.mul(p).mul(ln_p).div(s).lambertw().mul(s).div(ln_p)
     if (x.gt(308)) {
-      const ln_p = Decimal.ln(2).mul(temp.generator_scale_power)
-      x = Decimal.pow(2,temp.generator_scale_power).mul(x).mul(ln_p).div(308).lambertw().mul(308).div(ln_p)
+      if (getECCompletions(5) > 0 && i === 10) {
+        x = x.div(308).root(3).sub(1).div(temp.generator_scale_power).add(1).mul(308)
+      } else {
+        const ln_p = Decimal.ln(2).mul(temp.generator_scale_power)
+        x = Decimal.pow(2,temp.generator_scale_power).mul(x).mul(ln_p).div(308).lambertw().mul(308).div(ln_p)
+      }
     }
 
     x = Decimal.pow10(x).div(this.COST_BASE).log(this.COST_INC).sub(player.generators[i].additionalBought)
@@ -126,6 +137,7 @@ export const GENERATOR = (i: number) => ({
 
       giveAchievement(i > 8 ? 12 + i : 10 + i)
       if (i < 10) player.achRestrictions.a91 = false;
+      if (i > 1) player.achRestrictions.a112 = false;
     }
   },
 
@@ -164,6 +176,7 @@ export function getGeneratorScalingPower(): DecimalSource {
   let x: DecimalSource = DC.D1
 
   x = Decimal.sub(1, infinityUpgradeEffect(InfinityUpgrade.SlowerGenCost,0)).mul(x)
+  x = Decimal.sub(1, getECReward(6)).mul(x)
 
   return x
 }
@@ -173,7 +186,7 @@ export function getGeneratorBase(): DecimalSource {
   if (inNormalChallenge(6)) return Decimal.mul(.2, player.expanders).add(1).min(2);
   if (inNormalChallenge(11)) return 1;
 
-  let x = 2
+  let x: DecimalSource = 2
 
   if (hasInfinityUpgrade(InfinityUpgrade.GenBoost)) x = 2.2;
   if (isICBeaten(8)) x = 2.5;
@@ -201,9 +214,9 @@ export function totalGeneratorMultiplier(): DecimalSource {
 
   if (inNormalChallenge(1)) x = x.mul(player.challenges.normal.C1);
 
-  x = x.mul(temp.infinity.power.mult)
+  x = x.mul(temp.infinity.power.mult).mul(temp.eternity.ec10)
 
-  x = x.mul(getTimeStudyEffect(91)).mul(getTimeStudyEffect(101)).mul(getTimeStudyEffect(161))
+  x = x.mul(getTimeStudyEffect(91)).mul(getTimeStudyEffect(101)).mul(getTimeStudyEffect(161)).mul(getTimeStudyEffect(213))
 
   x = x.mul(getAchievementEffect(48)).mul(getAchievementEffect(72)).mul(getAchievementEffect(75));
   if (!temp.no_challenges) x = x.mul(getAchievementEffect(65));
@@ -215,10 +228,20 @@ export const EXPANDER = {
   get amount() { return player.expanders },
   set amount(v) { player.expanders = v },
 
+  get bonus(): DecimalSource {
+    return getTimeStudyEffect(232)
+  },
+
+  get total(): DecimalSource {
+    return Decimal.add(this.amount, temp.bouns_expander)
+  },
+
   get base() {
     let x = 1.5
     if (isICBeaten(5)) x -= .1;
     if (hasTimeStudy(81)) x -= .1;
+    if (hasTimeStudy(221)) x -= .1;
+    if (hasTimeStudy(231)) x -= .1;
     return x
   },
 
@@ -227,7 +250,11 @@ export const EXPANDER = {
 
     const n = Decimal.add(this.amount, 4).min(NC9 ? 8 : 10).toNumber()
 
-    const m = Decimal.sub(this.amount, NC9 ? 4 : 6).max(0).mul(this.base).add(2).ceil()
+    let m = Decimal.sub(this.amount, NC9 ? 4 : 6).max(0)
+
+    if (inEternitychallenge(5)) m = m.pow(2);
+
+    m = m.mul(this.base).add(2).ceil()
 
     return [n,m]
   },
@@ -235,14 +262,19 @@ export const EXPANDER = {
     const NC9 = inNormalChallenge(9)
 
     const amount = GENERATOR(NC9 ? 8 : 10).bought
-    const x = Decimal.sub(amount, 2).div(this.base).add(NC9 ? 4 : 6).floor().add(1)
+
+    let x = Decimal.sub(amount, 2).div(this.base)
+
+    if (inEternitychallenge(5)) x = x.root(2);
+
+    x = x.add(NC9 ? 4 : 6).floor().add(1)
     // Decimal.sub(this.amount, NC9 ? 4 : 6).max(0).mul(1.5).add(2).ceil()
 
     return x
   },
 
   get power(): DecimalSource {
-    if (inNormalChallenge(7) || inNormalChallenge(11) || inInfinityChallenge(8)) return 1;
+    if (inNormalChallenge(7) || inNormalChallenge(11) || inInfinityChallenge(8) || inEternitychallenge(6)) return 1;
     if (inInfinityChallenge(7)) return 10;
 
     let x: DecimalSource = 2
@@ -251,7 +283,7 @@ export const EXPANDER = {
     if (isICBeaten(7)) x = 4;
     if (hasTimeStudy(71)) x = 16;
 
-    x = Decimal.mul(x, getTimeStudyEffect(82)).mul(getTimeStudyEffect(83))
+    x = Decimal.mul(x, getTimeStudyEffect(82)).mul(getTimeStudyEffect(83)).mul(getTimeStudyEffect(233)).mul(getTimeStudyEffect(241))
 
     return x
   },
@@ -264,8 +296,13 @@ export const EXPANDER = {
     if (Decimal.gte(G.bought,m)) {
       let bulk = Decimal.add(this.amount,1)
       if (max && Decimal.gte(this.amount, inNormalChallenge(9) ? 4 : 6)) bulk = bulk.max(this.bulk);
+      if (bulk.sub(this.amount).gte(256)) giveAchievement(115);
       this.amount = bulk
-      this.reset()
+
+      if (Decimal.gte(player.eternity.times, 20)) {
+        if (inNormalChallenge(2)) player.challenges.normal.C2 = .01;
+        if (inInfinityChallenge(6)) player.challenges.normal.C10 = 0;
+      } else this.reset();
     }
   },
 
@@ -295,7 +332,7 @@ export const EXPANDER = {
 }
 
 export const REFINER = {
-  get unlocked() { return !inInfinityChallenge(2) && !inInfinityChallenge(7) && !inInfinityChallenge(8) && (player.refiner.times > 0 || Decimal.gte(player.expanders, 6)) },
+  get unlocked() { return !inInfinityChallenge(2) && !inInfinityChallenge(7) && !inInfinityChallenge(8) && !inEternitychallenge(3) && !inEternitychallenge(6) && (player.refiner.times > 0 || Decimal.gte(player.expanders, 6)) },
 
   get requirement() { return hasInfinityUpgrade(InfinityUpgrade.Start4) ? 1e90 : 1e100 },
 
@@ -305,14 +342,18 @@ export const REFINER = {
 
     if (x.lt(L)) return 1;
 
-    const exp = Decimal.sub(isICBeaten(2) ? 2.5 : 3, getTimeStudyEffect(42))
+    const exp = Decimal.sub(isICBeaten(2) ? 2.5 : 3, getTimeStudyEffect(42)).sub(getTimeStudyEffect(236))
 
     x = x.div(L).root(exp).mul(10).sub(10).pow10()
 
     if (hasInfinityUpgrade(InfinityUpgrade.RefineBoost)) x = x.pow(1.25);
     if (hasInfinityUpgrade(InfinityUpgrade.RefineBoost2)) x = x.sqr();
 
-    x = x.pow(getAchievementEffect(28)).pow(getAchievementEffect(36));
+    x = x.pow(getAchievementEffect(28)).pow(getAchievementEffect(36)).pow(getAchievementEffect(116));
+
+    x = x.pow(getTimeStudyEffect(222)).pow(getTimeStudyEffect(242));
+
+    if (inEternitychallenge(5)) x = expPow(x, .5);
 
     return x
   },
@@ -325,7 +366,7 @@ export const REFINER = {
       player.refiner.highest = player.points
       giveAchievement(26)
 
-      if (Decimal.gte(player.eternity.times, 20)) {
+      if (hasAchievement(101)) {
         if (inNormalChallenge(2)) player.challenges.normal.C2 = .01;
         if (inInfinityChallenge(6)) player.challenges.normal.C10 = 0;
       } else this.reset();

@@ -11,6 +11,7 @@ import { hasInfinityUpgrade, INFINITY, InfinityUpgrade, purchaseInfinityUpgrade 
 import { INF_GENERATOR } from "./generators/infinity-generators";
 import { InfinityEnergy } from "./infinity-energy";
 import { ETERNITY } from "./eternity";
+import { inEternitychallenge } from "./challenges/eternity-challenges";
 
 export type AutomationSwitchData = {
   enabled: boolean,
@@ -136,6 +137,8 @@ export const AUTOMATIONS: Record<string,{
 
     bulkOption: true,
     tick(data) {
+      if (inEternitychallenge(8)) return;
+
       const b = data.bulk
 
       for (let i = 1; i <= 10; i++) {
@@ -354,6 +357,8 @@ export const AUTOMATIONS: Record<string,{
 
     bulkOption: false,
     tick() {
+      if (inEternitychallenge(8)) return;
+
       for (let i = 0; i < InfinityEnergy.upgrades.length; i++) InfinityEnergy.purchaseUpgrade(i, true);
     },
   },

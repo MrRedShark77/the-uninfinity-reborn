@@ -1,9 +1,11 @@
 import { player, temp } from "@/main";
 import type { GeneratorTemp } from "@/update";
-import { D, DC } from "@/utils/decimal";
+import { D, DC, scale } from "@/utils/decimal";
 import Decimal, { type DecimalSource } from "break_eternity.js";
 import { getTimeStudyEffect, hasTimeStudy } from "../timestudies";
 import { simpleEternityEffect } from "../eternity";
+import { getECReward } from "../challenges/eternity-challenges";
+import { getAchievementEffect } from "../achievements";
 
 const GENERATOR_PREFIXES = ['Mono-',"Minga-","Nena-","Luma-","Kama-","Jamea-","Iana-","Hotta-","Gexa-","Fotta-","Eotta-"]
 
@@ -39,7 +41,11 @@ export const TIME_GENERATOR = (i: number) => ({
   get resourceName() { return 'EP' },
 
   COST(l) {
-    return Decimal.pow(this.COST_INC, l).mul(this.COST_BASE)
+    let x = Decimal.pow(this.COST_INC, scale(l, 1000, 2, 'P')).mul(this.COST_BASE).log10()
+
+    if (i <= 4) x = scale(x, 400, 2, 'L');
+
+    return x.pow10()
   },
   get cost() { return this.COST(this.bought) },
 
@@ -48,9 +54,11 @@ export const TIME_GENERATOR = (i: number) => ({
 
     if (x.lt(this.COST_BASE)) return 0
 
-    x = x.div(this.COST_BASE).log(this.COST_INC)
+    x = x.log10()
 
-    return x.floor().add(1)
+    if (i <= 4) x = scale(x, 400, 2, 'L', true);
+
+    return scale(x.pow10().div(this.COST_BASE).log(this.COST_INC), 1000, 2, "P", true).floor().add(1)
   },
 
   purchase(max=false) {
@@ -104,10 +112,14 @@ export function getTimeShardsEffect() {
 export function totalTimeGeneratorMultiplier(): DecimalSource {
   let x = DC.D1
 
-  x = x.mul(getTimeStudyEffect(73)).mul(getTimeStudyEffect(93)).mul(getTimeStudyEffect(151))
+  x = x.mul(getTimeStudyEffect(73)).mul(getTimeStudyEffect(93)).mul(getTimeStudyEffect(151)).mul(getTimeStudyEffect(235))
 
   x = x.mul(simpleEternityEffect('timeGenMult1')).mul(simpleEternityEffect('timeGenMult3'))
   .mul(simpleEternityEffect('timeGenMult4'))
+
+  x = x.mul(getECReward(1)).mul(getECReward(10))
+
+  x = x.mul(getAchievementEffect(118))
 
   return x
 }

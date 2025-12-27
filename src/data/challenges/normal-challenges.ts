@@ -76,7 +76,7 @@ export function getNCCompletions() {
   for (let m = (player.challenges.normal.completedBits | 1) ^ 1; m !== 0; m >>= 1) n += m & 1;
   return n
 }
-export function getTotalFastestNC() { return player.challenges.normal.fastest.reduce((a,b) => a + b, 0) }
+export function getTotalFastestNC() { return player.challenges.normal.fastest.reduce((a,b) => Decimal.add(a,b), 0) }
 
 export function startNormalChallenge(id: number) {
   if (!player.first.infinity || inNormalChallenge(id)) return;
@@ -91,7 +91,7 @@ export function completeNormalChallenge() {
   const id = player.challenges.normal.current
 
   if (INFINITY.reached) {
-    if (id > 0) player.challenges.normal.fastest[id-1] = Math.min(player.challenges.normal.fastest[id-1], player.infinity.time);
+    if (id > 0) player.challenges.normal.fastest[id-1] = Decimal.min(player.challenges.normal.fastest[id-1], player.infinity.time);
     player.challenges.normal.completedBits |= 1 << id;
 
     const no = Decimal.lte(player.expanders, REFINER.startingExpander) && Decimal.lte(player.refiner.highest, 1e100)

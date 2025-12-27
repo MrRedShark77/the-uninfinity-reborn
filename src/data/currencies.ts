@@ -10,6 +10,8 @@ import { INF_GENERATOR } from "./generators/infinity-generators";
 import { INF_CHALLENGES, inInfinityChallenge } from "./challenges/infinity-challenges";
 import { ETERNITY } from "./eternity";
 import { TIME_GENERATOR } from "./generators/time-generators";
+import { inEternitychallenge } from "./challenges/eternity-challenges";
+import { hasTimeStudy } from "./timestudies";
 
 export interface CurrencyData {
   name: string;
@@ -71,7 +73,7 @@ export const CURRENCIES: Record<Currency, CurrencyData> = {
       return x.floor()
     },
 
-    passive: 0,
+    get passive() { return +hasTimeStudy(191) / 100 },
   },
   "infinity-power": {
     name: "Infinity Power",
@@ -82,6 +84,8 @@ export const CURRENCIES: Record<Currency, CurrencyData> = {
     },
 
     get gain() {
+      if (inEternitychallenge(2) || inEternitychallenge(10)) return 0;
+
       const G = INF_GENERATOR(1), x = Decimal.mul(G.amount, G.temp.mult)
 
       return x
@@ -127,6 +131,8 @@ export const CURRENCIES: Record<Currency, CurrencyData> = {
     },
 
     get gain() {
+      if (inEternitychallenge(1) || inEternitychallenge(10)) return 0;
+
       const G = TIME_GENERATOR(1), x = Decimal.mul(G.amount, G.temp.mult)
 
       return x

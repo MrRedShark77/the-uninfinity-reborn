@@ -5,11 +5,12 @@ import { notify } from "@/utils/notify"
 import type { DecimalSource } from "break_eternity.js"
 import Decimal from "break_eternity.js"
 import { getTotalFastestNC, isNCBeaten } from "./challenges/normal-challenges"
-import { hasInfinityUpgrade, InfinityUpgrade } from "./infinity"
+import { hasInfinityUpgrade, INFINITY, InfinityUpgrade } from "./infinity"
 import { getTotalFastestIC } from "./challenges/infinity-challenges"
 import { InfinityEnergy } from "./infinity-energy"
-import { hasTimeStudy } from "./timestudies"
+import { calculateTimeStudiesCount, hasTimeStudy, isTimeStudyEmpty } from "./timestudies"
 import { NewsTicker } from "./news-ticker"
+import { getTotalECTiers } from "./challenges/eternity-challenges"
 
 interface Achievement {
   name: string
@@ -111,7 +112,7 @@ export const Achievements: Record<number, Achievement> = {
   34: {
     name: `Is this timewall?`,
     get description() { return `Play for <b>one hour</b>.` },
-    condition: () => player.timePlayed >= 3600,
+    condition: () => Decimal.gte(player.timePlayed, 3600),
   },
   35: {
     name: `That’s FAST!`,
@@ -198,7 +199,7 @@ export const Achievements: Record<number, Achievement> = {
   52: {
     name: `Not-so-challenging`,
     get description() { return `Get the sum of normal Challenge times under <b>3 minutes</b>.` },
-    condition: () => getTotalFastestNC() <= 180,
+    condition: () => Decimal.lte(getTotalFastestNC(), 180),
   },
   53: {
     name: `Are you still here?`,
@@ -219,14 +220,14 @@ export const Achievements: Record<number, Achievement> = {
   56: {
     name: `Infinitely many deaths`,
     get description() { return `Complete the 1st Normal Challenge in under <b>one minute</b>.` },
-    condition: () => player.challenges.normal.fastest[0] <= 60,
+    condition: () => Decimal.lte(player.challenges.normal.fastest[0], 60),
   },
   57: {
     name: `Cap or slap?`,
     get description() { return `Complete the 6th Normal Challenge in under <b>one minute</b>.` },
     get reward() { return `Multiplier per OoMs of each Generator is increased by <b>+1%</b>.` },
     effect: [()=>1.01,1],
-    condition: () => player.challenges.normal.fastest[5] <= 60,
+    condition: () => Decimal.lte(player.challenges.normal.fastest[5], 60),
   },
   58: {
     name: `Feeling nostalgic`,
@@ -260,7 +261,7 @@ export const Achievements: Record<number, Achievement> = {
     name: `Is this useless?`,
     get description() { return `Get the sum of normal Challenge times under <b>5 seconds</b>.` },
     get reward() { return `Generators are <b>50%</b> stronger during some Challenges.` },
-    condition: () => getTotalFastestNC() <= 5,
+    condition: () => Decimal.lte(getTotalFastestNC(), 5),
     effect: [()=>1.5,1],
   },
   66: {
@@ -281,7 +282,7 @@ export const Achievements: Record<number, Achievement> = {
   71: {
     name: `It’s Mario time!`,
     get description() { return `Complete the 5th Infinity Challenge in under <b>15 seconds</b>.` },
-    condition: () => player.challenges.infinity.fastest[4] <= 15,
+    condition: () => Decimal.lte(player.challenges.infinity.fastest[4], 15),
   },
   72: {
     name: `Jacorbian-RedSharkian balancing in a nutshell`,
@@ -309,7 +310,7 @@ export const Achievements: Record<number, Achievement> = {
     get description() { return `Play for <b>10 days</b>.` },
     get reward() { return `Total time played boosts Generators at a very reduced rate.` },
     effect: [()=>Decimal.div(player.timePlayed,86400).add(1).root(10),1,x=>formatMult(x)],
-    condition: () => player.timePlayed >= 864000,
+    condition: () => Decimal.gte(player.timePlayed, 864000),
   },
   76: {
     name: `GOOGOL REFINIER`,
@@ -356,7 +357,7 @@ export const Achievements: Record<number, Achievement> = {
     get description() { return `Reach <b>${format(1e15)}</b> Infinity Energy in under <b>one hour</b>.` },
     get reward() { return `Infinity Energy provides a measuredly small boost to Infinity Points.` },
     effect: [()=>expPow(Decimal.add(player.infinity.energy.amount, 1).root(5), .5),1,x=>formatMult(x)],
-    condition: () => player.infinity.time <= 3600 && Decimal.gte(player.infinity.energy.amount, 1e15)
+    condition: () => Decimal.lte(player.infinity.time, 3600) && Decimal.gte(player.infinity.energy.amount, 1e15)
   },
   86: {
     name: `Time is relative`,
@@ -366,7 +367,7 @@ export const Achievements: Record<number, Achievement> = {
   87: {
     name: `Am I wrong about this?`,
     get description() { return `Get the sum of Infinity Challenge times under <b>10 seconds</b>.` },
-    condition: () => getTotalFastestIC() <= 10
+    condition: () => Decimal.lte(getTotalFastestIC(), 10)
   },
   88: {
     name: `Turning twenty`,
@@ -416,6 +417,90 @@ export const Achievements: Record<number, Achievement> = {
     get reward() { return `Start with <b>${format(5e25)}</b> Infinity Points in the Eternity.` },
   },
 
+  101: {
+    name: `Infinities everywhere so far`,
+    get description() { return `Have all your Infinities in your past 10 Infinities be at least <b>${format(DC.DE308)}</b> times higher Infinity Points than the previous one.` },
+    get reward() { return `Generator Refiner no longer resets anything.` },
+  },
+  102: {
+    name: `Kbdpscjbo-SfeTibsljbo cbmbodjoh jo b ovutifmm 2`,
+    get description() { return `Reach <b>${format('ee4')}</b> Infinity Points.` },
+    get reward() { return `Infinity Points are powered by <b>^1.05</b>.` },
+    condition: () => Decimal.gte(player.infinity.points, 'ee4'),
+    effect: [()=>1.05,1]
+  },
+  103: {
+    name: `I feel eternal pain`,
+    get description() { return `Eternity in under <b>250 milliseconds</b>.` },
+    get reward() { return `Gain <b>×2</b> more Eternities.` },
+    effect: [()=>2,1],
+  },
+  104: {
+    name: `That’s gonna be fun`,
+    get description() { return `Complete an Eternity Challenge.` },
+  },
+  105: {
+    name: `That was enough`,
+    get description() { return `Complete 5 times of any Eternity Challenge.` },
+  },
+  106: {
+    name: `Beginner mistake`,
+    get description() { return `Fail an Eternity Challenge.` },
+  },
+  107: {
+    name: `Can I have an Eternity?`,
+    get description() { return `Eternity with only manual Infinity.` },
+    get reward() { return `Infinities boost Infinity Points.` },
+    effect: [()=>Decimal.add(INFINITY.totalInfinities, 1), 1, x=>formatMult(x,0)],
+  },
+  108: {
+    name: `Don’t tell me`,
+    get description() { return `Eternity when Infinity Energy is greater than Infinity Points.` },
+  },
+
+  111: {
+    name: `I HATE IDLE PATH`,
+    get description() { return `Reach <b>${format(DC.DE19728)}</b> Infinity Energy using TS133.` },
+    get reward() { return `Time Studies 131 & 133’ effect is always maxed.` },
+    condition: () => hasTimeStudy(133) && Decimal.gte(player.infinity.energy.amount, DC.DE19728),
+  },
+  112: {
+    name: `You are already dead.`,
+    get description() { return `Eternity without buying Normal Generators 2-10.` },
+  },
+  113: {
+    name: `I don’t need any advantages`,
+    get description() { return `Complete EC10 without Infinity Generators and Infinity Energy.` },
+  },
+  114: {
+    name: `That was already a pain`,
+    get description() { return `Complete <b>50</b> unique Eternity Challenge Tiers.` },
+    condition: () => getTotalECTiers() >= 50,
+  },
+  115: {
+    name: `I felt when I got snapped`,
+    get description() { return `Expand <b>256</b> times at once.` },
+  },
+  116: {
+    name: `It’s over 8000, not 9000`,
+    get description() { return `Get over <b>${formatMult('e8000')}</b> from Generator Refiner.` },
+    get reward() { return `Generator Refiner is <b>12.5%</b> stronger.` },
+    condition: () => Decimal.gte(temp.refiner_boost, 'e8000'),
+    effect: [()=>1.125,1],
+  },
+  117: {
+    name: `Inflated? Raise the requirement`,
+    get description() { return `Reach <b>${format(DC.DE308)}</b> Eternity Points.` },
+    condition: () => Decimal.gte(player.eternity.points, DC.DE308),
+  },
+  118: {
+    name: `Getting In Timewall For Dummies`,
+    get description() { return `Reach <b>${format('e50000')}</b> Infinity Points without any Time Studies.` },
+    get reward() { return `Time Generators are <b>doubled</b> per purchased Time Study.` },
+    condition: () => isTimeStudyEmpty() && Decimal.gte(player.infinity.points, 'e50000'),
+    effect: [()=>Decimal.pow(2, calculateTimeStudiesCount()), 1, x => formatMult(x,0)]
+  },
+
   /*
   41: {
     name: ``,
@@ -453,6 +538,7 @@ export function giveAchievement(id: number) {
   player.achievements[id] = true;
   notify(`<b>Achievement Unlocked:</b> ${Achievements[id].name}`,'success')
 }
+export function giveAchievements(...ids: number[]) { ids.forEach(giveAchievement) }
 
 export function updateAchievementTemp() {
   for (const id of AchievementKeys) {

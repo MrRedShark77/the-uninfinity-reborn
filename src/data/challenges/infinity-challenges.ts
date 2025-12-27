@@ -38,7 +38,7 @@ export const INF_CHALLENGES: {
     goal: D('e6400'),
     reward: `The multiplier per OoMs of each generator is increased based on purchased Generator and Generator Expander slightly.`,
   },{
-    description: `Only the latest bought Antimatter Dimension's production is normal. All other Antimatter Dimensions produce less (^0.25).`,
+    description: `Only the latest bought Normal Gemerator's production is normal. All other Normal Gemerators produce less (^0.25).`,
     require: D('e14400'),
     goal: D('e14000'),
     reward: `All Generators are raised to the 1.05th power.`,
@@ -72,7 +72,7 @@ export function getICCompletions() {
   for (let m = (player.challenges.infinity.completedBits | 1) ^ 1; m !== 0; m >>= 1) n += m & 1;
   return n
 }
-export function getTotalFastestIC() { return player.challenges.infinity.fastest.reduce((a,b) => a + b, 0) }
+export function getTotalFastestIC() { return player.challenges.infinity.fastest.reduce((a,b) => Decimal.add(a, b), 0) }
 
 export function startInfinityChallenge(id: number) {
   if (!player.first.infinity || inInfinityChallenge(id)) return;
@@ -88,7 +88,7 @@ export function completeInfinityChallenge() {
 
   if (Decimal.gte(player.points, INF_CHALLENGES[id].goal)) {
     if (id > 0) {
-      player.challenges.infinity.fastest[id-1] = Math.min(player.challenges.infinity.fastest[id-1], player.infinity.time);
+      player.challenges.infinity.fastest[id-1] = Decimal.min(player.challenges.infinity.fastest[id-1], player.infinity.time);
       player.challenges.infinity.completedBits |= 1 << id;
     }
     giveAchievement(66)

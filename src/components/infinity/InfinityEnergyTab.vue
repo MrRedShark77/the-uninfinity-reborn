@@ -5,6 +5,7 @@ import Decimal from 'break_eternity.js';
 import { FPS, player, temp } from '@/main';
 import { InfinityEnergy } from '@/data/infinity-energy';
 import InfinityEnergyUpgrade from './InfinityEnergyUpgrade.vue';
+import { inEternitychallenge } from '@/data/challenges/eternity-challenges';
 
 const energy = player.infinity.energy
 
@@ -17,6 +18,7 @@ const UPGS_ORDER = [
 <template>
   <div v-if="energy.unlocked">
     <p>You have <span class="g--energy">{{ format(energy.amount, 0) }}</span> {{ formatGain(energy.amount, InfinityEnergy.calc(energy.amount, Decimal.div(InfinityEnergy.base, FPS)).sub(energy.amount).mul(FPS)) }} Infinity Energy<sup class="g--energy">{{ format(InfinityEnergy.exponent,3) }}</sup>, translated to a <span class="g--energy">{{ formatMult(temp.infinity.energy.effect.mult) }}</span> multiplier on all Infinity Generators.</p>
+    <p v-if="inEternitychallenge(8)">You have <b>{{ player.challenges.eternity.C8[1] }}</b> purchases left.</p>
     <div class="energy-upgrades">
       <InfinityEnergyUpgrade v-for="x in UPGS_ORDER" :key="x" :n="x" />
     </div>

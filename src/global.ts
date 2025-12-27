@@ -7,6 +7,7 @@ import { calc } from "./update";
 import { notify } from "./utils/notify";
 import { Quote } from "./utils/quote";
 import { respecTimeStudies } from "./data/timestudies";
+import { giveAchievement, giveAchievements } from "./data/achievements";
 
 declare global {
   interface Window {
@@ -33,6 +34,6 @@ if (import.meta.env.DEV) {
   }
 
   window.dev = {
-    save, calc, temp, copySave, notify, Q, respecTS, deepAssign
+    save, calc, temp, copySave, notify, Q, respecTS, deepAssign, giveAchievement, giveAchievements
   }
 }

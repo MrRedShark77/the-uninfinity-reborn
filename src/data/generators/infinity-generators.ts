@@ -9,6 +9,7 @@ import { infinityEnergyUpgradeEffect } from "../infinity-energy"
 import { getAchievementEffect } from "../achievements"
 import { getTimeStudyEffect } from "../timestudies"
 import { simpleEternityEffect } from "../eternity"
+import { getECReward, inEternitychallenge } from "../challenges/eternity-challenges"
 
 const GENERATOR_PREFIXES = ['Mono-',"Xenna-","Weka-","Vendeka-","Udeka-","Treda-","Sorta-","Rinta-","Quexa-","Pepta-","Ocha-"]
 
@@ -30,9 +31,13 @@ export const INF_GENERATOR = (i: number) => ({
   temp: temp.infinity.generators[i],
 
   get base() {
+    if (inEternitychallenge(7) || inEternitychallenge(11)) return 1;
+
     let x = D(2)
 
     if (isICBeaten(6)) x = Decimal.div(this.bought, 50).add(x);
+
+    // x = x.mul(getECReward(8))
 
     return x
   },
@@ -50,7 +55,7 @@ export const INF_GENERATOR = (i: number) => ({
   get resourceName() { return 'IP' },
 
   COST(l) {
-    return Decimal.pow(this.COST_INC, l).mul(this.COST_BASE)
+    return Decimal.pow(this.COST_INC, l).pow(getECReward(12)).mul(this.COST_BASE)
   },
   get cost() { return this.COST(this.bought) },
 
@@ -59,13 +64,13 @@ export const INF_GENERATOR = (i: number) => ({
 
     if (x.lt(this.COST_BASE)) return 0
 
-    x = x.div(this.COST_BASE).log(this.COST_INC)
+    x = x.div(this.COST_BASE).root(getECReward(12)).log(this.COST_INC)
 
     return x.floor().add(1)
   },
 
   purchase(max=false) {
-    if (!this.unlocked) return;
+    if (!this.unlocked || inEternitychallenge(8) && (player.challenges.eternity.C8[0] === 0 || max)) return;
 
     let cost = this.cost
     const amount = this.resource
@@ -79,6 +84,7 @@ export const INF_GENERATOR = (i: number) => ({
       if (Decimal.lt(player.eternity.times, 20)) this.resource = Decimal.sub(amount,cost).max(0);
 
       player.achRestrictions.a93 = false;
+      player.challenges.eternity.C8[0]--;
     }
   },
 
@@ -130,7 +136,9 @@ export function getInfinityPowerEffect() {
 
   const slowdown = DC.DE308.mul(simpleEternityEffect('infGenMult4'))
 
-  OoMs = softcap(OoMs, slowdown.log10(), .5, "P")
+  const pow = Decimal.pow(.5, Decimal.sub(1, getECReward(8)))
+
+  OoMs = softcap(OoMs, slowdown.log10(), pow, "P")
 
   const exp = Decimal.add(5, infinityEnergyUpgradeEffect(3, 0))
 
@@ -152,6 +160,8 @@ export function totalInfinityGeneratorMultiplier(): DecimalSource {
   .mul(simpleEternityEffect('infGenMult3'))
 
   x = x.mul(getTimeStudyEffect(72)).mul(getTimeStudyEffect(92)).mul(getTimeStudyEffect(162))
+
+  x = x.mul(getECReward(4))
 
   return x
 }

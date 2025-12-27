@@ -7,16 +7,17 @@ import { CURRENCIES, Currency } from "./data/currencies";
 import { hasInfinityUpgrade, INFINITY, InfinityUpgrade, infinityUpgradeEffect, simpleInfinityEffect, updateInfinityTemp } from "./data/infinity";
 import { getNC10Exponent, inNormalChallenge } from "./data/challenges/normal-challenges";
 import { AUTO_TIMEOUTS, AUTOMATIONS } from "./data/automations";
-import { forceDeepAssign } from "./utils/saveload";
+import { deepAssign } from "./utils/saveload";
 import { getInfinityPowerEffect, INF_GEN_POWER, INF_GENERATOR, purchaseAllInfinityGenerators, totalInfinityGeneratorMultiplier } from "./data/generators/infinity-generators";
 import { checkICUnlocks, inInfinityChallenge, isICBeaten } from "./data/challenges/infinity-challenges";
 import { InfinityEnergy } from "./data/infinity-energy";
 import { AchievementKeys, Achievements, checkAllAchievements, getAchievementEffect, giveAchievement, hasAchievement, updateAchievementTemp } from "./data/achievements";
 import { keyPressed } from "./utils/keybinds";
 import { notify } from "./utils/notify";
-import { getTimeShardsEffect, TIME_GENERATOR, totalTimeGeneratorMultiplier } from "./data/generators/time-generators";
+import { getTimeShardsEffect, purchaseAllTimeGenerators, TIME_GENERATOR, totalTimeGeneratorMultiplier } from "./data/generators/time-generators";
 import { getTimeStudyEffect, updateTimeStudiesTemp } from "./data/timestudies";
 import { ETERNITY, simpleEternityEffect, updateEternityTemp } from "./data/eternity";
+import { EternityChallenges, failEternityChallenge, getECReward, inEternitychallenge } from "./data/challenges/eternity-challenges";
 
 // Calculation
 
@@ -39,62 +40,65 @@ export function loop() {
 export function calc(dt: number) {
   const dt_cap = player.flux.amount / (state.flux_speed - 1)
   const dt_flux = state.flux_speed > 1 ? Math.min(dt, dt_cap) * state.flux_speed + (Math.max(dt, dt_cap) - dt_cap) : dt
+  const preU_dt = Decimal.mul(dt_flux, temp.speed)
 
   cond = Decimal.gte(temp.currencies.points, player.points) ? cond + dt_flux : 0;
 
-  for (let i = 10; i > 0; i--) {
+  if (!inEternitychallenge(1) && !inEternitychallenge(10)) for (let i = 10; i > 0; i--) {
     const G = TIME_GENERATOR(i)
 
-    player.eternity.generators[i].amount = Decimal.mul(G.temp.gain, dt_flux).add(player.eternity.generators[i].amount);
+    player.eternity.generators[i].amount = Decimal.mul(G.temp.gain, preU_dt).add(player.eternity.generators[i].amount);
   }
 
-  for (let i = 10; i > 0; i--) {
+  if (!inEternitychallenge(2) && !inEternitychallenge(10)) for (let i = 10; i > 0; i--) {
     const G = INF_GENERATOR(i)
 
-    player.infinity.generators[i].amount = Decimal.mul(G.temp.gain, dt_flux).add(player.infinity.generators[i].amount);
+    player.infinity.generators[i].amount = Decimal.mul(G.temp.gain, preU_dt).add(player.infinity.generators[i].amount);
   }
 
   for (let i = 10; i > 0; i--) {
     const G = GENERATOR(i)
 
-    if (!player.infinity.reached) player.generators[i].amount = Decimal.mul(G.temp.gain, dt_flux).add(player.generators[i].amount);
+    if (!player.infinity.reached) player.generators[i].amount = Decimal.mul(G.temp.gain, preU_dt).add(player.generators[i].amount);
   }
 
   for (const i in CURRENCIES) {
     const C = CURRENCIES[i as Currency]
-    C.amount = Decimal.mul(C.gain, C.passive).mul(dt_flux).add(C.amount)
+    C.amount = Decimal.mul(C.gain, C.passive).mul(preU_dt).add(C.amount)
   }
 
-  player.infinity.points = Decimal.mul(infinityUpgradeEffect(InfinityUpgrade.IPGen), dt_flux/60).add(player.infinity.points);
+  player.infinity.points = Decimal.mul(infinityUpgradeEffect(InfinityUpgrade.IPGen), preU_dt.div(60)).add(player.infinity.points);
 
   if (hasInfinityUpgrade(InfinityUpgrade.PassiveGen)) {
-    player.infinity.passive += dt_flux;
-    const f = player.infinity.fastest * 10
-    if (player.infinity.passive >= f) player.infinity.points = Decimal.mul(Math.floor(player.infinity.passive / f), INFINITY.totalIPMultiplier).add(player.infinity.points);
-    player.infinity.passive %= f
+    player.infinity.passive = preU_dt.add(player.infinity.passive);
+    const f = Decimal.mul(player.infinity.fastest, 10)
+    if (Decimal.gte(player.infinity.passive, f)) player.infinity.points = Decimal.mul(Decimal.div(player.infinity.passive, f).floor(), INFINITY.totalIPMultiplier).add(player.infinity.points);
+    player.infinity.passive = Decimal.mod(player.infinity.passive, f);
   } else player.infinity.passive = 0;
 
-  if (hasInfinityUpgrade(InfinityUpgrade.TimesGen)) {
-    player.infinity.passiveTimes += dt_flux;
-    const f = player.infinity.fastest * 5
-    if (player.infinity.passiveTimes >= f) player.infinity.times = Decimal.mul(Math.floor(player.infinity.passiveTimes / f), temp.infinity.infinities_gain).add(player.infinity.times);
-    player.infinity.passiveTimes %= f
-  } else player.infinity.passiveTimes = 0;
+  if (!inEternitychallenge(4)) {
+    if (hasInfinityUpgrade(InfinityUpgrade.TimesGen)) {
+      player.infinity.passiveTimes = preU_dt.add(player.infinity.passiveTimes);
+      const f = Decimal.mul(player.infinity.fastest, 5)
+      if (Decimal.gte(player.infinity.passiveTimes, f)) player.infinity.times = Decimal.mul(Decimal.div(player.infinity.passiveTimes, f).floor(), temp.infinity.infinities_gain).add(player.infinity.times);
+      player.infinity.passiveTimes = Decimal.mod(player.infinity.passiveTimes, f);
+    } else player.infinity.passiveTimes = 0;
+    if (Decimal.gte(player.eternity.times, 1e3)) player.infinity.times = Decimal.mul(player.eternity.fastInfinties, preU_dt).add(player.infinity.times);
+  }
 
   checkICUnlocks()
 
   if (player.infinity.energy.unlocked) {
-    player.infinity.energy.amount = InfinityEnergy.calc(player.infinity.energy.amount, Decimal.mul(InfinityEnergy.base, dt_flux))
+    player.infinity.energy.amount = InfinityEnergy.calc(player.infinity.energy.amount, Decimal.mul(InfinityEnergy.base, preU_dt))
   }
 
-  if (Decimal.gte(player.eternity.times, 5)) player.eternity.points = Decimal.mul(ETERNITY.milestones[4].rate as DecimalSource, dt_flux/60).add(player.eternity.points);
-  if (Decimal.gte(player.eternity.times, 1e3)) player.infinity.times = Decimal.mul(player.eternity.fastInfinties, dt_flux).add(player.infinity.times);
+  if (Decimal.gte(player.eternity.times, 5)) player.eternity.points = Decimal.mul(ETERNITY.milestones[4].rate as DecimalSource, preU_dt.div(60)).add(player.eternity.points);
 
   if (Decimal.gte(player.eternity.times, 100)) {
-    player.eternity.passiveTimes += dt_flux;
-    const f = player.eternity.fastest * 2
-    if (player.eternity.passiveTimes >= f) player.eternity.times = Decimal.mul(Math.floor(player.eternity.passiveTimes / f), 1).add(player.eternity.times);
-    player.eternity.passiveTimes %= f
+    player.eternity.passiveTimes = preU_dt.add(player.eternity.passiveTimes);
+    const f = Decimal.mul(player.eternity.fastest, 2)
+    if (player.eternity.passiveTimes >= f) player.eternity.times = Decimal.mul(Decimal.div(player.eternity.passiveTimes, f).floor(), temp.eternity.eternities_gain).add(player.eternity.times);
+    player.eternity.passiveTimes = Decimal.mod(player.eternity.passiveTimes, f)
   } else player.eternity.passiveTimes = 0;
 
   for (const i in AUTOMATIONS) {
@@ -140,22 +144,27 @@ export function calc(dt: number) {
   if (keyPressed('M') && player.tab === 0) {
     if (player.stab[0] === 0) purchaseAllGenerators();
     if (player.stab[0] === 1) purchaseAllInfinityGenerators();
+    if (player.stab[0] === 2) purchaseAllTimeGenerators();
   }
   if (keyPressed('E')) EXPANDER.expand();
   if (keyPressed('R')) REFINER.refine();
   if (keyPressed('C')) INFINITY.crunch();
 
-  player.timePlayed += dt_flux
-  player.eternity.time += dt_flux
+  player.realTimePlayed += dt_flux
+  player.timePlayed = preU_dt.add(player.timePlayed)
 
-  if (!player.infinity.reached) player.infinity.time += dt_flux;
+  if (!player.infinity.reached) player.infinity.time = preU_dt.add(player.infinity.time);
+  player.eternity.time = preU_dt.add(player.eternity.time);
+
+  if (inEternitychallenge(12) && Decimal.gte(player.eternity.time, 1 - .2 * Math.min(player.challenges.eternity.completed[12], 4))) failEternityChallenge();
+
   if (cond >= 30) giveAchievement(32);
 
   checkAllAchievements();
 
-  if (inNormalChallenge(1)) player.challenges.normal.C1 = Decimal.add(player.challenges.normal.C1, dt_flux / 180).min(1);
-  if (inNormalChallenge(2)) player.challenges.normal.C2 = Decimal.pow(1.005, dt_flux).mul(player.challenges.normal.C2);
-  if (inNormalChallenge(10) || inInfinityChallenge(6)) player.challenges.normal.C10 = Decimal.add(player.challenges.normal.C10, inInfinityChallenge(6) ? dt_flux * 10 : dt_flux);
+  if (inNormalChallenge(1)) player.challenges.normal.C1 = Decimal.add(player.challenges.normal.C1, preU_dt.div(180)).min(1);
+  if (inNormalChallenge(2)) player.challenges.normal.C2 = Decimal.pow(1.005, preU_dt).mul(player.challenges.normal.C2);
+  if (inNormalChallenge(10) || inInfinityChallenge(6)) player.challenges.normal.C10 = Decimal.add(player.challenges.normal.C10, inInfinityChallenge(6) ? preU_dt.mul(10) : preU_dt);
 
   state.time += dt
   if (state.flux_speed > 1) {
@@ -182,6 +191,7 @@ export type TempData = {
   generator_scale_power: DecimalSource;
   generator_oom_mult: DecimalSource,
   expander_power: DecimalSource;
+  bouns_expander: DecimalSource;
   refiner_boost: DecimalSource;
   refiner_boost_increase: DecimalSource;
 
@@ -205,6 +215,7 @@ export type TempData = {
 
   eternity: {
     upgrades: Record<string, DecimalSource>;
+    eternities_gain: DecimalSource;
 
     generators: GeneratorTemp[];
     generator_mult: DecimalSource;
@@ -212,6 +223,10 @@ export type TempData = {
     shards: DecimalSource;
 
     timestudies: Record<string, DecimalSource>;
+
+    challenge_rewards: DecimalSource[];
+
+    ec10: DecimalSource;
   };
 
   currencies: Record<string, DecimalSource>;
@@ -219,6 +234,8 @@ export type TempData = {
   achievements: Record<number, DecimalSource>;
 
   no_challenges: boolean;
+
+  speed: DecimalSource;
 
   [index: string]: unknown;
 }
@@ -231,6 +248,7 @@ export function getTempData(): TempData {
     generator_base: 2,
     generator_oom_mult: 1,
     expander_power: 2,
+    bouns_expander: 0,
     refiner_boost: 1,
     refiner_boost_increase: 1,
 
@@ -254,6 +272,7 @@ export function getTempData(): TempData {
 
     eternity: {
       upgrades: {},
+      eternities_gain: 0,
 
       generators: [],
       generator_mult: 1,
@@ -261,11 +280,16 @@ export function getTempData(): TempData {
       shards: 0,
 
       timestudies: {},
+
+      challenge_rewards: [],
+
+      ec10: 1,
     },
 
     currencies: {},
     achievements: {},
     no_challenges: false,
+    speed: 1,
   };
 
   for (let i = 1; i <= 10; i++) {
@@ -293,17 +317,27 @@ export function getTempData(): TempData {
     const A = Achievements[i]
     if ('effect' in A) T.achievements[i] = A.effect![1];
   };
+  for (let i = 1; i < EternityChallenges.length; i++) T.eternity.challenge_rewards[i] = EternityChallenges[i].effect[1];
 
   return T
 }
 
 export function resetTemp() {
-  forceDeepAssign(temp, getTempData())
+  deepAssign(temp, getTempData())
   updateTemp()
 }
 
+function calculateGameSpeed() {
+  let x = DC.D1
+
+  if (inEternitychallenge(12)) x = x.div(1e3);
+
+  return x
+}
+
 export function updateTemp() {
-  temp.no_challenges = inNormalChallenge(0) && inInfinityChallenge(0)
+  temp.no_challenges = inNormalChallenge(0) && inInfinityChallenge(0) && inEternitychallenge(0)
+  temp.speed = calculateGameSpeed()
 
   updateAchievementTemp()
 
@@ -323,14 +357,17 @@ export function updateTemp() {
   temp.generator_scale_power = getGeneratorScalingPower()
 
   temp.generator_base = getGeneratorBase();
+
   temp.expander_power = EXPANDER.power;
+  temp.bouns_expander = EXPANDER.bonus;
+
   temp.generator_mult = totalGeneratorMultiplier();
   temp.generator_oom_mult = totalGeneratorOoMMultiplier();
   temp.refiner_boost = REFINER.calc_boost(player.refiner.highest);
   temp.refiner_boost_increase = Decimal.div(REFINER.calc_boost(player.points), temp.refiner_boost)
 
   const NC12 = inNormalChallenge(12), s = NC12 ? 1 : 0;
-  const oom_inc_exp = Decimal.sub(1, infinityUpgradeEffect(InfinityUpgrade.SlowerOoMMult,0)).pow_base(.5)
+  const oom_inc_exp = Decimal.sub(1, infinityUpgradeEffect(InfinityUpgrade.SlowerOoMMult,0)).sub(getECReward(11)).pow_base(.5)
 
   for (let i = 10; i > 0; i--) {
     const G = TIME_GENERATOR(i), T = temp.eternity.generators[i];
@@ -372,8 +409,16 @@ export function updateTemp() {
     .mul(temp.infinity.generator_mult)
     .mul(Decimal.pow(INF_GEN_POWER[i] ?? 1,G.bought))
 
-    if (i >= 10) T.gain = 0;
-    else {
+    if (i === 1) T.mult = T.mult.mul(getECReward(2));
+
+    if (i >= 10) {
+      const G = TIME_GENERATOR(1)
+
+      let x = DC.D0
+      if (inEternitychallenge(7)) x = Decimal.mul(G.amount, G.temp.mult);
+      else x = Decimal.mul(G.amount, G.temp.mult).max(1).pow(getECReward(7)).sub(1);
+      T.gain = x
+    } else {
       const NG = INF_GENERATOR(i + 1)
 
       const amount = NG.amount
@@ -385,33 +430,40 @@ export function updateTemp() {
   for (let i = 10; i > 0; i--) {
     const G = GENERATOR(i), T = temp.generators[i];
 
-    let OoMs = Decimal.max(G.amount,1).log10();
+    let OoMs = inEternitychallenge(9) ? DC.D0 : Decimal.max(G.amount,1).log10();
     const fixed_OoMs = OoMs;
 
     OoMs = softcap(OoMs, DC.DE308LOG, oom_inc_exp, "P")
 
     T.oom_inc = OoMs.gt(0) ? fixed_OoMs.div(OoMs) : 1
 
-    T.mult = OoMs.add(temp.eternity.shards).pow_base(G.base)
-    .mul(temp.generator_mult).mul(temp.refiner_boost)
-    .mul(Decimal.pow(temp.generator_base,G.bought))
-    .mul(Decimal.sub(player.expanders, i - 1).max(0).pow_base(temp.expander_power));
-
-    if (i == 1 && inNormalChallenge(2)) T.mult = T.mult.mul(player.challenges.normal.C2);
-
-    T.mult = T.mult.mul(simpleInfinityEffect('genMult' + (5.5 - Math.abs(5.5 - i))))
-
-    if (hasAchievement(27)) T.mult = T.mult.mul(1 + i / 100);
-    if (i <= 8) T.mult = T.mult.mul(getAchievementEffect(46));
-    if (i <= 4) T.mult = T.mult.mul(getAchievementEffect(55));
-    if (i === 1) T.mult = T.mult.mul(getAchievementEffect(61));
-
-    if (inNormalChallenge(10) || inInfinityChallenge(6)) T.mult = T.mult.pow(getNC10Exponent());
-    if (inInfinityChallenge(4) && i !== player.challenges.infinity.C4) T.mult = T.mult.pow(.25);
-    if (isICBeaten(4)) T.mult = T.mult.pow(1.05);
-
-    if (i + s >= 10) T.gain = 0;
+    if (inEternitychallenge(11)) T.mult = Decimal.sub(player.expanders, i - 1).max(0).add(temp.bouns_expander).pow_base(temp.expander_power).mul(temp.infinity.power.mult);
     else {
+      T.mult = OoMs.add(temp.eternity.shards).pow_base(G.base)
+      .mul(temp.generator_mult).mul(temp.refiner_boost)
+      .mul(Decimal.pow(temp.generator_base,G.bought))
+      .mul(Decimal.sub(player.expanders, i - 1).max(0).add(temp.bouns_expander).pow_base(temp.expander_power));
+
+      if (i == 1 && inNormalChallenge(2)) T.mult = T.mult.mul(player.challenges.normal.C2);
+
+      T.mult = T.mult.mul(simpleInfinityEffect('genMult' + (5.5 - Math.abs(5.5 - i))))
+
+      if (hasAchievement(27)) T.mult = T.mult.mul(1 + i / 100);
+      if (i <= 8) T.mult = T.mult.mul(getAchievementEffect(46));
+      if (i <= 4) T.mult = T.mult.mul(getAchievementEffect(55));
+      if (i === 1) T.mult = T.mult.mul(getAchievementEffect(61));
+      if (i === 10) T.mult = T.mult.mul(getTimeStudyEffect(224));
+
+      if (inNormalChallenge(10) || inInfinityChallenge(6)) T.mult = T.mult.pow(getNC10Exponent());
+      if (inInfinityChallenge(4) && i !== player.challenges.infinity.C4) T.mult = T.mult.pow(.25);
+      if (isICBeaten(4)) T.mult = T.mult.pow(1.05);
+    }
+
+    if (i + s >= (inEternitychallenge(3) ? 4 : 10)) {
+      const G = INF_GENERATOR(1)
+
+      T.gain = inEternitychallenge(7) ? Decimal.mul(G.amount, G.temp.mult) : 0;
+    } else {
       const NG = GENERATOR(i + s + 1)
 
       let amount = NG.amount

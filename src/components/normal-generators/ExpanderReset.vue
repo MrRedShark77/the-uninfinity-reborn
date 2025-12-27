@@ -24,7 +24,7 @@ const canExpand = computed(() => {
     <PrimaryButton :enabled="canExpand" @click="() => EXPANDER.expand()">
       <img class="image" src="/assets/textures/expand.png" draggable="false">
       <div class="g--gen-top">
-        <div><b>Generator Expanders</b> ({{ format(EXPANDER.amount,0) }})</div>
+        <div><b>Generator Expanders</b> ({{ format(EXPANDER.amount,0) }}<span v-if="Decimal.gt(temp.bouns_expander, 0)"> + {{ format(temp.bouns_expander,0) }}</span>)</div>
       </div>
       <div>Resets the game for a new Generator. Each generator gains a <b>{{ formatMult(temp.expander_power) }}</b> boost to its multiplier per expander.</div>
       <div class="g--gen-bottom">Require: {{ require }}</div>

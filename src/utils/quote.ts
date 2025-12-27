@@ -141,6 +141,48 @@ export const Quotes: Record<string, QuoteData> = {
       `Here we go...`,
     ],
   },
+  unlock_ec: {
+    role: "eternity",
+    lines: [
+      {text: `You unlocked an Eternity Challenge.`, hide_name: true},
+      `There are Eternity Challenges.`,
+      `You can complete each of them <b>5 times</b>.`,
+      `The more tiers you complete, the further the goal you must reach, and the stronger the reward you will get.`,
+      `Each Eternity Challenge requires its Time Study.`,
+      {text: `You are finally normal!`, role: "infinity"},
+      `???`,
+    ],
+  },
+  complete_ec: {
+    role: "eternity",
+    lines: [
+      {text: `You completed an Eternity Challenge.`, hide_name: true},
+      `Oh my god!`,
+      `Here is your reward, but it is small.`,
+      `You can beat it again, but its goal is raised every time.`,
+      `Or you can unlock another challenge!`,
+    ],
+  },
+  complete_ec_5t: {
+    role: "eternity",
+    lines: [
+      `Whoa!`,
+      `An Eternity Challenge is maxed...`,
+      `You have got stronger rewards...`,
+      `Honestly, keep grinding!`,
+    ],
+  },
+  all_ec: {
+    role: "eternity",
+    lines: [
+      `How?...`,
+      `Are you supposed to wait faster?`,
+      {text: `Stop “infighting” it.`, role: "infinity"},
+      `So, what will we be doing?`,
+      {text: `...`, role: "infinity"},
+      `Fine, I would have to get the next feature...`,
+    ],
+  },
 }
 
 export const Quote = {

@@ -317,6 +317,10 @@ button * {
   border-color: #ff9400;
   background-color: color-mix(in srgb, #ff9400 4%, transparent);
 }
+.g--challenge.eternity {
+  border-color: #b341e0;
+  background-color: color-mix(in srgb, #b341e0 4%, transparent);
+}
 
 .g--challenge-header {
   position: absolute;
@@ -500,6 +504,18 @@ button * {
 .g--time-study--idle-bought {
   --button-color: #1925ff !important;
 }
+.g--time-study--light {
+  --button-color: #666 !important;
+}
+.g--time-study--light-bought {
+  --button-color: #fff !important;
+}
+.g--time-study--dark {
+  --button-color: #444 !important;
+}
+.g--time-study--dark-bought {
+  --button-color: #888 !important;
+}
 
 #session-time {
   position: fixed;
@@ -508,6 +524,7 @@ button * {
   background-color: color-mix(in srgb, var(--rainbow-color) 10%, #fff1);
   padding: 2px;
   pointer-events: none;
+  text-align: left;
 }
 
 .g--news-ticker {
@@ -577,4 +594,34 @@ button * {
   background: linear-gradient(blue, navy);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+}
+
+.g--time-study-preset {
+  display: grid;
+  width: 100%;
+  height: 100px;
+  grid-template-rows: 20px 1fr 1fr 30px;
+  gap: 5px;
+}
+
+.g--time-study-preset-input {
+  width: calc(100% - 20px);
+  border: none;
+  border-radius: 5px;
+  padding: 2px 4px;
+  font-size: 12px;
+  text-align: left;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+}
+
+.g--time-study-preset-buttons {
+  display: grid;
+  height: 100%;
+  grid-template-columns: repeat(5, 120px);
+  justify-content: center;
+}
+.g--time-study-preset-buttons > button {
 }

@@ -2,13 +2,14 @@ import { player, temp } from "@/main"
 import { DC } from "@/utils/decimal"
 import Decimal, { type DecimalSource } from "break_eternity.js"
 import { CURRENCIES } from "./currencies"
-import { calcCompletedAchievements, giveAchievement, hasAchievement } from "./achievements"
+import { calcCompletedAchievements, getAchievementEffect, giveAchievement, hasAchievement } from "./achievements"
 import { INFINITY, type RepeatableInfinityUpgrade } from "./infinity"
 import { InfinityEnergy } from "./infinity-energy"
 import { getTimeStudyEffect, respecTimeStudies } from "./timestudies"
 import { format, formatMult, formatPlus, formatTime } from "@/utils/formats"
 import { getTotalFastestIC } from "./challenges/infinity-challenges"
 import { Quote } from "@/utils/quote"
+import { completeEternityChallenge, getECGoal, getECReward, inEternitychallenge, updateECTemp } from "./challenges/eternity-challenges"
 
 export enum EternityUpgrade {
   InfGenMult1 = 'infGenMult1',
@@ -39,7 +40,7 @@ export const EternityUpgrades: Record<string, {
   'infGenMult3': {
     description: `Increases Infinity Generators based on the sum of Infinity Challenge times.`,
     cost: 5e4,
-    effect: () => Decimal.div(30, Math.max(getTotalFastestIC(), .5)).pow_base(2),
+    effect: () => Decimal.div(30, Decimal.max(getTotalFastestIC(), .5)).pow_base(2),
     display: x => formatMult(x),
   },
   'infGenMult4': {
@@ -58,7 +59,7 @@ export const EternityUpgrades: Record<string, {
   'timeGenMult2': {
     description: `Time Shards affect Infinity Generators at a reduced rate.`,
     cost: 4e25,
-    effect: () => Decimal.add(player.eternity.shards, 1).log(1.5),
+    effect: () => Decimal.add(player.eternity.shards, 1).log(1.5).mul(getECReward(9)),
     display: x => formatPlus(x),
   },
   'timeGenMult3': {
@@ -80,8 +81,24 @@ export const EternityUpgrades: Record<string, {
     max: DC.DINF,
     description: "Gain ×5 more EP.",
 
-    cost: x => Decimal.pow(50, x).mul(50),
-    bulk: x => Decimal.div(x,50).log(50).floor().add(1),
+    cost(x) {
+      let y = Decimal.pow(50, x).mul(50).log10()
+
+      if (y.gte(DC.DE308LOG)) y = y.mul(2).sub(DC.DE308LOG);
+      if (y.gte(1300)) y = y.mul(2).sub(1300);
+      if (y.gte(5000)) y = y.pow(2).div(5000);
+
+      return y.pow10()
+    },
+    bulk(x) {
+      let y = Decimal.log10(x)
+
+      if (y.gte(5000)) y = y.mul(5000).root(2);
+      if (y.gte(1300)) y = y.add(1300).div(2);
+      if (y.gte(DC.DE308LOG)) y = y.add(DC.DE308LOG).div(2);
+
+      return y.pow10().div(50).log(50).floor().add(1)
+    },
 
     effect: x => Decimal.pow(5, x),
     display: x => formatMult(x,0),
@@ -119,7 +136,7 @@ export function purchaseEternityUpgrade(id: string, all: boolean = false) {
 }
 
 export const ETERNITY = {
-  get reached() { return Decimal.gte(player.infinity.points, DC.DE308) },
+  get reached() { return Decimal.gte(player.infinity.points, inEternitychallenge(0) ? DC.DE308 : getECGoal(player.challenges.eternity.current)) },
 
   get totalEPMultiplier(): DecimalSource {
     let x = DC.D1
@@ -135,7 +152,7 @@ export const ETERNITY = {
   get eternitiesGain(): DecimalSource {
     let x = DC.D1
 
-    x = x;
+    x = x.mul(getAchievementEffect(103));
 
     return x.max(1).round()
   },
@@ -147,7 +164,7 @@ export const ETERNITY = {
 
     player.eternity.points = Decimal.add(player.eternity.points, gain);
     player.eternity.times = Decimal.add(player.eternity.times, 1);
-    player.eternity.fastest = Math.min(player.eternity.fastest, player.eternity.time)
+    player.eternity.fastest = Decimal.min(player.eternity.fastest, player.eternity.time)
     player.first.eternity = true
 
     player.eternity.last10.push({
@@ -161,6 +178,17 @@ export const ETERNITY = {
     if (player.achRestrictions.a93) giveAchievement(93);
     if (player.achRestrictions.a97 < 10) giveAchievement(97);
     if (Decimal.lte(player.eternity.time, 10)) giveAchievement(98);
+    if (player.achRestrictions.a97 <= 1) giveAchievement(107);
+    if (Decimal.gt(player.infinity.energy.amount, player.infinity.points)) giveAchievement(108);
+    if (player.achRestrictions.a112) giveAchievement(112);
+
+    if (Decimal.lte(player.eternity.time, .25)) giveAchievement(103);
+
+    if (!inEternitychallenge(0)) completeEternityChallenge();
+    else if (player.eternity.timestudy.respec) {
+      respecTimeStudies(true);
+      player.eternity.timestudy.respec = false;
+    }
 
     Quote.addFromKeys('eternity');
 
@@ -200,7 +228,9 @@ export const ETERNITY = {
     if (hasAchievement(98)) player.infinity.points = 5e25;
     else player.infinity.points = 0;
 
+    INFINITY.bankInfinities();
     player.infinity.times = 0
+
     player.infinity.fastest = Number.MAX_VALUE
     player.eternity.fastInfinties = 0
     player.infinity.last10 = []
@@ -224,6 +254,8 @@ export const ETERNITY = {
     player.challenges.normal.current = 0;
     player.challenges.infinity.current = 0;
 
+    player.infinity.energy.amount = 0
+
     player.challenges.infinity.completedBits = 0;
 
     player.eternity.shards = 0;
@@ -232,11 +264,10 @@ export const ETERNITY = {
     player.achRestrictions.a91 = true;
     player.achRestrictions.a93 = true;
     player.achRestrictions.a97 = 0;
+    player.achRestrictions.a101 = 0;
+    player.achRestrictions.a112 = true;
 
-    if (player.eternity.timestudy.respec) {
-      respecTimeStudies(true);
-      player.eternity.timestudy.respec = false;
-    }
+    player.challenges.eternity.C8 = [50, 50];
 
     INFINITY.reset()
   },
@@ -302,7 +333,7 @@ export const ETERNITY = {
       get description() { return `Start with all Infinity Generators unlocked in the Eternity. Buying them no longer takes IP away.` },
     },{
       count: 30,
-      get description() { return `Generator Refiner no longer resets anything.` },
+      get description() { return `Generator Expander no longer resets anything.` },
     },{
       count: 40,
       get description() { return `Unlock a Infinity Energy Upgrades autobuyer.` },
@@ -311,7 +342,7 @@ export const ETERNITY = {
       get description() { return `Unlock an Eternity autobuyer.` },
     },{
       count: 100,
-      get description() { return `Generate Eternities based on your fastest Eternity at a <b>50%</b> rate. <b>(${format(1,0)} Eternities every ${formatTime(Decimal.mul(player.eternity.fastest, 2))})</b>` },
+      get description() { return `Generate Eternities based on your fastest Eternity at a <b>50%</b> rate. <b>(${format(temp.eternity.eternities_gain,0)} Eternities every ${formatTime(Decimal.mul(player.eternity.fastest, 2))})</b>` },
     },{
       count: 1000,
       get description() { return `Generate Infinities at a <b>50%</b> rate of your best Infinities/s this Eternity. <b>(${format(Decimal.div(player.eternity.fastInfinties, 2),0)} Infinities/s)</b>` },
@@ -325,8 +356,12 @@ export const ETERNITY = {
 }
 
 export function updateEternityTemp() {
+  temp.eternity.eternities_gain = ETERNITY.eternitiesGain
+
   for (const id in EternityUpgrades) {
     const U = EternityUpgrades[id]
     if (U.effect) temp.eternity.upgrades[id] = 'max' in U ? U.effect(player.eternity.upgrades[id]) : U.effect();
   }
+
+  updateECTemp()
 }

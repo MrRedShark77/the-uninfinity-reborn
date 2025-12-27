@@ -6,7 +6,7 @@ function closeDialog() {
 
   if (L) {
     state.dialog.recent.pop()
-    state.dialog.current = state.dialog.recent[L-1];
+    state.dialog.current = state.dialog.recent[L-2];
   }
 }
 
@@ -17,11 +17,11 @@ function activateDialog(func?: VoidFunction) {
 </script>
 
 <template>
-  <div id="dialog" :class="{footer: state.dialog.current.buttons.length}" v-if="state.dialog.current">
+  <div id="dialog" :style="state.dialog.current.style" :class="{footer: state.dialog.current.buttons.length}" v-if="state.dialog.current">
     <div id="dialog-header">
       <div></div>
       <div id="dialog-title" v-html="state.dialog.current.title"></div>
-      <div id="dialog-close" @click="closeDialog()"><img src="/assets/textures/black_cross.png"></div>
+      <div id="dialog-close" @click="closeDialog()"></div>
     </div>
     <hr class="line">
     <div id="dialog-content">
@@ -42,7 +42,7 @@ function activateDialog(func?: VoidFunction) {
   position: fixed;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, calc(-50% - 50px));
+  transform: translate(-50%, calc(-50% - 0px));
 
   max-width: calc(100% - 40px);
   max-height: calc(100% - 160px);
@@ -82,6 +82,7 @@ function activateDialog(func?: VoidFunction) {
   cursor: pointer;
   border-radius: 5px;
   border: none;
+  background: white url("/assets/textures/black_cross.png") center no-repeat;
   background-size: 30px;
 }
 .footer #dialog-close {
