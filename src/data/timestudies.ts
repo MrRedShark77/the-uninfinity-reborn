@@ -167,7 +167,7 @@ export const TimeStudies: (TimeStudy | InvisibleBlock | EC_TS)[] = [
     require() { return Decimal.gte(temp.refiner_boost, this.EC_base) },
     get requirement() { return `<b>${formatMult(temp.refiner_boost)} / ${formatMult(this.EC_base)}</b> from Generator Refiner's boost` },
 
-    get description() { return `Eternity Challenge 4 (${player.challenges.eternity.completed[5]}/5)` },
+    get description() { return `Eternity Challenge 5 (${player.challenges.eternity.completed[5]}/5)` },
     cost: 135,
   },
 
