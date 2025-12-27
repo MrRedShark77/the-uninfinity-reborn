@@ -11,7 +11,7 @@ const plr = player.automations[autoid].configs![data.id] as AutomationListData
   <div v-if="data.condition()" style="width: 100%;">
     <div class="g--automation-switch">{{ data.name }}:</div>
     <select v-model="plr.value">
-      <div v-for="x in data.list" :key="x[0]"><option :value="x[0]" v-if="x[2]()">{{ x[1] }}</option></div>
+      <template v-for="x in data.list" :key="x[0]"><option :value="x[0]" v-if="x[2]()">{{ x[1] }}</option></template>
     </select>
   </div>
 </template>

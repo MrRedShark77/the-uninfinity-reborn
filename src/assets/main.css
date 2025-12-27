@@ -29,6 +29,10 @@
   user-select: none;
 }
 
+select, option {
+  font: -moz-pull-down-menu;
+}
+
 body {
   margin: 0px 10px;
   font-size: 14px;
@@ -622,6 +626,4 @@ input:focus, textarea:focus, select:focus {
   height: 100%;
   grid-template-columns: repeat(5, 120px);
   justify-content: center;
-}
-.g--time-study-preset-buttons > button {
 }
