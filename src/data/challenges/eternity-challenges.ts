@@ -118,7 +118,7 @@ export function completeEternityChallenge() {
       giveAchievement(105);
       Quote.addFromKeys('complete_ec_5t');
     }
-    if (id === 10 && player.challenges.eternity.C8[0] >= 50 && player.challenges.eternity.C8[1] >= 50) giveAchievement(113);
+    if (id === 8 && player.challenges.eternity.C8[0] >= 50 && player.challenges.eternity.C8[1] >= 50) giveAchievement(113);
 
     player.challenges.eternity.unlockedBits |= 1 << (id - 1)
     respecTimeStudies(true)

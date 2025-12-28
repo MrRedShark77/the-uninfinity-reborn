@@ -470,7 +470,7 @@ export const Achievements: Record<number, Achievement> = {
   },
   113: {
     name: `I don’t need any advantages`,
-    get description() { return `Complete EC10 without Infinity Generators and Infinity Energy.` },
+    get description() { return `Complete EC8 without Infinity Generators and Infinity Energy.` },
   },
   114: {
     name: `That was already a pain`,
