@@ -6,6 +6,7 @@ import { D, DC, simpleCost, softcap, sumBase } from "@/utils/decimal";
 import { Quote } from "@/utils/quote";
 import { getTimeStudyEffect, hasTimeStudy } from "./timestudies";
 import { inEternitychallenge } from "./challenges/eternity-challenges";
+import { hasAchievement } from "./achievements";
 
 type InfinityEnergyUpgrade = {
   description: string;
@@ -65,6 +66,9 @@ export const InfinityEnergy = {
   get overflowStart(): DecimalSource {
     return 'e3e5'
   },
+  get overflowPower() {
+    return hasAchievement(124) ? 1.95 : 2
+  },
 
   calc(amount: DecimalSource, offest: DecimalSource): Decimal {
     const exp = this.exponent
@@ -73,10 +77,10 @@ export const InfinityEnergy = {
 
     if (exp.lte(0)) return x;
 
-    const overflow = this.overflowStart, overflow_log = Decimal.log10(overflow)
+    const overflow = this.overflowStart, overflow_log = Decimal.log10(overflow), overflow_power = this.overflowPower
     let o1 = false
 
-    if (o1 = x.gte(overflow)) x = x.log10().sqr().div(overflow_log).pow10()
+    if (o1 = x.gte(overflow)) x = x.log10().pow(overflow_power).div(overflow_log).pow10()
 
     x = x.root(exp)
 
@@ -84,7 +88,7 @@ export const InfinityEnergy = {
 
     x = x.pow(exp)
 
-    if (o1) x = x.log10().mul(overflow_log).sqrt().pow10()
+    if (o1) x = x.log10().mul(overflow_log).root(overflow_power).pow10()
 
     return x
   },
@@ -163,7 +167,7 @@ export const InfinityEnergy = {
       if (Decimal.lt(player.eternity.times, 40)) C.amount = Decimal.sub(C.amount, cost).max(0);
       player.infinity.energy.upgrades[i] = bulk;
 
-      player.challenges.eternity.C8[1]--
+      if (inEternitychallenge(8)) player.challenges.eternity.C8[1]--;
     }
   },
 

@@ -10,6 +10,7 @@ import { getAchievementEffect } from "../achievements"
 import { getTimeStudyEffect } from "../timestudies"
 import { simpleEternityEffect } from "../eternity"
 import { getECReward, inEternitychallenge } from "../challenges/eternity-challenges"
+import { hasDilationUpgrade } from "../dilation"
 
 const GENERATOR_PREFIXES = ['Mono-',"Xenna-","Weka-","Vendeka-","Udeka-","Treda-","Sorta-","Rinta-","Quexa-","Pepta-","Ocha-"]
 
@@ -37,7 +38,7 @@ export const INF_GENERATOR = (i: number) => ({
 
     if (isICBeaten(6)) x = Decimal.div(this.bought, 50).add(x);
 
-    // x = x.mul(getECReward(8))
+    if (hasDilationUpgrade(4)) x = x.mul(temp.eternity.dilation.effect);
 
     return x
   },

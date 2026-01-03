@@ -11,7 +11,9 @@ import { INF_CHALLENGES, inInfinityChallenge } from "./challenges/infinity-chall
 import { ETERNITY } from "./eternity";
 import { TIME_GENERATOR } from "./generators/time-generators";
 import { inEternitychallenge } from "./challenges/eternity-challenges";
-import { hasTimeStudy } from "./timestudies";
+import { getTimeStudyEffect, hasTimeStudy } from "./timestudies";
+import { hasDilationUpgrade, TimeDilation } from "./dilation";
+import { getAchievementEffect } from "./achievements";
 
 export interface CurrencyData {
   name: string;
@@ -27,6 +29,7 @@ export enum Currency {
   EternityPoints = "eternity",
   TimeShards = "time-shards",
   TimeTheorems = "time-theorems",
+  DilatedTime = "dilated-time",
 }
 
 export const CURRENCIES: Record<Currency, CurrencyData> = {
@@ -35,7 +38,7 @@ export const CURRENCIES: Record<Currency, CurrencyData> = {
 
     get amount() { return player.points },
     set amount(v) {
-      player.points = v
+      player.points = Decimal.max(v,0)
 
       const CAP = inInfinityChallenge(0) ? DC.DE308 : INF_CHALLENGES[player.challenges.infinity.current].goal
 
@@ -60,7 +63,7 @@ export const CURRENCIES: Record<Currency, CurrencyData> = {
 
     get amount() { return player.infinity.points },
     set amount(v) {
-      player.infinity.points = v
+      player.infinity.points = Decimal.max(v,0)
     },
 
     get gain() {
@@ -69,6 +72,8 @@ export const CURRENCIES: Record<Currency, CurrencyData> = {
       let x = Decimal.log10(player.points).div(308).sub(.75).pow10()
 
       x = x.mul(INFINITY.totalIPMultiplier)
+
+      if (hasDilationUpgrade(11)) x = x.pow(getTimeStudyEffect(111)).pow(getAchievementEffect(102));
 
       return x.floor()
     },
@@ -80,7 +85,7 @@ export const CURRENCIES: Record<Currency, CurrencyData> = {
 
     get amount() { return player.infinity.power },
     set amount(v) {
-      player.infinity.power = v
+      player.infinity.power = Decimal.max(v,0)
     },
 
     get gain() {
@@ -97,7 +102,7 @@ export const CURRENCIES: Record<Currency, CurrencyData> = {
     name: "Infinity Energy",
 
     get amount() { return player.infinity.energy.amount },
-    set amount(v) { player.infinity.energy.amount = v },
+    set amount(v) { player.infinity.energy.amount = Decimal.max(v,0) },
 
     gain: 0,
     passive: 0,
@@ -107,7 +112,7 @@ export const CURRENCIES: Record<Currency, CurrencyData> = {
 
     get amount() { return player.eternity.points },
     set amount(v) {
-      player.eternity.points = v
+      player.eternity.points = Decimal.max(v,0)
     },
 
     get gain() {
@@ -116,6 +121,8 @@ export const CURRENCIES: Record<Currency, CurrencyData> = {
       let x = Decimal.log10(player.infinity.points).div(308).sub(.7).pow_base(5)
 
       x = x.mul(ETERNITY.totalEPMultiplier)
+
+      x = x.pow(getAchievementEffect(122))
 
       return x.floor()
     },
@@ -127,7 +134,7 @@ export const CURRENCIES: Record<Currency, CurrencyData> = {
 
     get amount() { return player.eternity.shards },
     set amount(v) {
-      player.eternity.shards = v
+      player.eternity.shards = Decimal.max(v,0)
     },
 
     get gain() {
@@ -151,6 +158,23 @@ export const CURRENCIES: Record<Currency, CurrencyData> = {
     gain: 0,
 
     passive: 0,
+  },
+  "dilated-time": {
+    name: "Dilated Time",
+
+    get amount() { return player.eternity.dilation.dilatedTime },
+    set amount(v) {
+      player.eternity.dilation.dilatedTime = Decimal.max(v,0);
+      player.eternity.dilation.bestDilatedTime = Decimal.max(player.eternity.dilation.bestDilatedTime, player.eternity.dilation.dilatedTime);
+    },
+
+    get gain() {
+      if (!hasTimeStudy("DIL")) return 0;
+
+      return Decimal.mul(player.eternity.dilation.tachyonParticles, TimeDilation.DT_mult)
+    },
+
+    passive: 1,
   },
 }
 

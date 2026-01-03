@@ -19,6 +19,7 @@ import EternityPreStab from "@/components/eternity/EternityPreStab.vue";
 import TimeGeneratorsTab from "@/components/time-generators/TimeGeneratorsTab.vue";
 import { isECsUnlocked } from "./challenges/eternity-challenges";
 import EternityChallengesTab from "@/components/challenges/EternityChallengesTab.vue";
+import DilationTab from "@/components/dilation/DilationTab.vue";
 
 export const TABS: {
   name: string;
@@ -110,6 +111,7 @@ export const TABS: {
       [TimeStudiesTab, "Time Studies"],
       [EternityUpgradesTab, "Eternity Upgrades"],
       [EternityMilestonesTab, "Eternity Milestones"],
+      [DilationTab, "Time Dilation", () => player.first.dilation],
     ],
   },
 ]

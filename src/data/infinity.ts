@@ -12,6 +12,7 @@ import { Quote } from "@/utils/quote";
 import { CURRENCIES } from "./currencies";
 import { getTimeStudyEffect, hasTimeStudy } from "./timestudies";
 import { failEternityChallenge, getECCompletions, inEternitychallenge } from "./challenges/eternity-challenges";
+import { hasDilationUpgrade } from "./dilation";
 
 export enum InfinityUpgrade {
   TimeMult = 'timeMult',
@@ -352,8 +353,8 @@ export const INFINITY = {
 
     player.infinity.points = Decimal.add(player.infinity.points, gain);
     player.infinity.times = Decimal.add(player.infinity.times, temp.infinity.infinities_gain);
-    player.infinity.fastest = Decimal.min(player.infinity.fastest, player.infinity.time)
-    player.eternity.fastInfinties = Decimal.clampMin(player.eternity.fastInfinties, Decimal.div(temp.infinity.infinities_gain, Decimal.max(player.infinity.fastest, .025)))
+    player.infinity.fastest = Decimal.min(player.infinity.fastest, player.infinity.time).max(.05)
+    player.eternity.fastInfinties = Decimal.clampMin(player.eternity.fastInfinties, Decimal.div(temp.infinity.infinities_gain, Decimal.max(player.infinity.fastest, .05)))
     player.first.infinity = true
 
     player.infinity.last10.push({
@@ -420,7 +421,9 @@ export const INFINITY = {
 
     x = x.mul(getTimeStudyEffect(41)).mul(getTimeStudyEffect(51)).mul(getTimeStudyEffect(141)).mul(getTimeStudyEffect(142)).mul(getTimeStudyEffect(143))
 
-    x = x.pow(getTimeStudyEffect(111)).pow(getAchievementEffect(102))
+    x = x.mul(temp.eternity.dilation.upgrades[7]).mul(temp.eternity.dilation.upgrades[12])
+
+    if (!hasDilationUpgrade(11)) x = x.pow(getTimeStudyEffect(111)).pow(getAchievementEffect(102));
 
     return x
   },
@@ -431,7 +434,7 @@ export const INFINITY = {
     let x = DC.D1
 
     x = x.mul(infinityEnergyUpgradeEffect(5, 1)).mul(getTimeStudyEffect(32))
-    x = x.mul(getAchievementEffect(62)).mul(getAchievementEffect(92))
+    x = x.mul(getAchievementEffect(62)).mul(getAchievementEffect(92)).mul(getAchievementEffect(121))
 
     return x.max(1).round()
   },

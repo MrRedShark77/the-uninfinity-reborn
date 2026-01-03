@@ -6,6 +6,7 @@ import { getTimeStudyEffect, hasTimeStudy } from "../timestudies";
 import { simpleEternityEffect } from "../eternity";
 import { getECReward } from "../challenges/eternity-challenges";
 import { getAchievementEffect } from "../achievements";
+import { hasDilationUpgrade } from "../dilation";
 
 const GENERATOR_PREFIXES = ['Mono-',"Minga-","Nena-","Luma-","Kama-","Jamea-","Iana-","Hotta-","Gexa-","Fotta-","Eotta-"]
 
@@ -25,7 +26,11 @@ export const TIME_GENERATOR = (i: number) => ({
   temp: temp.eternity.generators[i],
 
   get base() {
-    return 2
+    let x = D(2)
+
+    if (hasDilationUpgrade(8)) x = x.mul(temp.eternity.dilation.effect);
+
+    return x
   },
 
   COST_BASE: GEN_COST_BASE[i] ?? DC.DINF,
@@ -115,7 +120,7 @@ export function totalTimeGeneratorMultiplier(): DecimalSource {
   x = x.mul(getTimeStudyEffect(73)).mul(getTimeStudyEffect(93)).mul(getTimeStudyEffect(151)).mul(getTimeStudyEffect(235))
 
   x = x.mul(simpleEternityEffect('timeGenMult1')).mul(simpleEternityEffect('timeGenMult3'))
-  .mul(simpleEternityEffect('timeGenMult4'))
+  .mul(simpleEternityEffect('timeGenMult4')).mul(temp.eternity.dilation.upgrades[5])
 
   x = x.mul(getECReward(1)).mul(getECReward(10))
 

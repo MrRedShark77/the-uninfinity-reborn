@@ -198,7 +198,7 @@ export function totalGeneratorOoMMultiplier(): DecimalSource {
   let x = DC.D1
 
   if (isICBeaten(5)) x = x.mul(1.1);
-  x = x.mul(getAchievementEffect(41)).mul(getAchievementEffect(57));
+  x = x.mul(getAchievementEffect(41)).mul(getAchievementEffect(57)).mul(temp.eternity.dilation.effect);
 
   return x
 }

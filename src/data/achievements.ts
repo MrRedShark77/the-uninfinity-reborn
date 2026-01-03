@@ -11,6 +11,8 @@ import { InfinityEnergy } from "./infinity-energy"
 import { calculateTimeStudiesCount, hasTimeStudy, isTimeStudyEmpty } from "./timestudies"
 import { NewsTicker } from "./news-ticker"
 import { getTotalECTiers } from "./challenges/eternity-challenges"
+import { INF_GENERATOR } from "./generators/infinity-generators"
+import { TimeDilation } from "./dilation"
 
 interface Achievement {
   name: string
@@ -395,7 +397,7 @@ export const Achievements: Record<number, Achievement> = {
     get description() { return `Get over <b>${format(1e3,0)}</b> effective OoMs in Normal Generators.` },
     get reward() { return `Time Shards affect Time Generators at a very reduced rate.` },
     effect: [()=>Decimal.add(player.eternity.shards,1).log(100).sqrt(),0,x=>formatPlus(x)+" effective OoMs"],
-    condition: () => Decimal.gte(player.eternity.times, 1e3),
+    condition: () => Decimal.gte(temp.eternity.shards, 1e3),
   },
   95: {
     name: `Not stonks`,
@@ -499,6 +501,59 @@ export const Achievements: Record<number, Achievement> = {
     get reward() { return `Time Generators are <b>doubled</b> per purchased Time Study.` },
     condition: () => isTimeStudyEmpty() && Decimal.gte(player.infinity.points, 'e50000'),
     effect: [()=>Decimal.pow(2, calculateTimeStudiesCount()), 1, x => formatMult(x,0)]
+  },
+
+  121: {
+    name: `No more spamming Infinity required`,
+    get description() { return `Have at least <b>${format(1e12)}</b> Banked Infinities.` },
+    get reward() { return `Gain <b>×2</b> more Infinities and keep <b>5%</b> of your Infinities as Banked Infinities on Eternity.` },
+    condition: () => Decimal.gte(player.infinity.banked, 1e12),
+    effect: [()=>2,1],
+  },
+  122: {
+    name: `Bhcfbtpae-BwkSykjrirx thlrxupnx sf h nldkoecv 3`,
+    get description() { return `Reach <b>${format('ee4')}</b> Eternity Points.` },
+    get reward() { return `Eternity Points are powered by <b>^1.05</b>.` },
+    condition: () => Decimal.gte(player.eternity.points, 'ee4'),
+    effect: [()=>1.05,1]
+  },
+  123: {
+    name: `No infinities exist`,
+    get description() { return `Reach <b>${format('ee6')}</b> Infinity Points without purchasing Infinity Dimensions and Infinity upgrade for IP multiplier.` },
+    get reward() { return `Keep all Infinity Challenges unlocked and completed on Eternity.` },
+    condition: () => player.infinity.generators.every((x, i) => i === 0 || Decimal.lte(x.bought, 1)) && Decimal.lte(player.infinity.upgrades['ipMult'], 0) && Decimal.gte(player.infinity.points, 'ee6'),
+  },
+  124: {
+    name: `Energy Overflow`,
+    get description() { return `Reach <b>${format('e4e6')}</b> Infinity Energy.` },
+    get reward() { return `Infinity Energy slowdown is weaker.` },
+    condition: () => Decimal.gte(player.infinity.energy.amount, 'e4e6'),
+  },
+  125: {
+    name: `This should be nerfed and buffed simultaneously`,
+    get description() { return `Get over <b>${formatMult(1e5)}</b> from multiplier per OoMs of each Infinity Generator.` },
+    condition() {
+      for (let x = 1; x <= 10; x++) if (Decimal.gte(INF_GENERATOR(x).base, 1e5)) return true;
+      return false
+    },
+  },
+  126: {
+    name: `Twin Paradox`,
+    get description() { return `Dilate time.` },
+  },
+  127: {
+    name: `I’m slower but still faster`,
+    get description() { return `Reach <b>${format('ee6')}</b> points while Dilated.` },
+    get reward() { return `Gain <b>×2</b> more Tachyon Particles and Dilated Time.` },
+    condition: () => Decimal.gte(player.points, 'ee6') && TimeDilation.active,
+    effect: [()=>2,1],
+  },
+  128: {
+    name: `This is how endless book works.`,
+    get description() { return `Reach <b>${format('e50000')}</b> Infinity Points without any Time Studies while Dilated.` },
+    get reward() { return `Eternity upgrade for EP multiplier affects Tachyon Particles at a very reduced rate.` },
+    condition: () => isTimeStudyEmpty() && Decimal.gte(player.infinity.points, 'e50000') && TimeDilation.active,
+    effect: [()=>Decimal.div(player.eternity.upgrades['epMult'], 1e3).add(1), 1, x => formatMult(x)],
   },
 
   /*

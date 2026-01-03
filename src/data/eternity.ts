@@ -10,6 +10,7 @@ import { format, formatMult, formatPlus, formatTime } from "@/utils/formats"
 import { getTotalFastestIC } from "./challenges/infinity-challenges"
 import { Quote } from "@/utils/quote"
 import { completeEternityChallenge, getECGoal, getECReward, inEternitychallenge, updateECTemp } from "./challenges/eternity-challenges"
+import { TimeDilation } from "./dilation"
 
 export enum EternityUpgrade {
   InfGenMult1 = 'infGenMult1',
@@ -164,7 +165,7 @@ export const ETERNITY = {
 
     player.eternity.points = Decimal.add(player.eternity.points, gain);
     player.eternity.times = Decimal.add(player.eternity.times, 1);
-    player.eternity.fastest = Decimal.min(player.eternity.fastest, player.eternity.time)
+    player.eternity.fastest = Decimal.min(player.eternity.fastest, player.eternity.time).max(.05)
     player.first.eternity = true
 
     player.eternity.last10.push({
@@ -250,13 +251,15 @@ export const ETERNITY = {
     if (Decimal.lt(player.eternity.times, 8)) player.infinity.energy.unlocked = false;
     for (let i = 0; i < InfinityEnergy.upgrades.length; i++) player.infinity.energy.upgrades[i] = 0;
 
-    player.challenges.infinity.unlocked = 0;
     player.challenges.normal.current = 0;
     player.challenges.infinity.current = 0;
 
     player.infinity.energy.amount = 0
 
-    player.challenges.infinity.completedBits = 0;
+    if (!hasAchievement(123)) {
+      player.challenges.infinity.unlocked = 0;
+      player.challenges.infinity.completedBits = 0;
+    }
 
     player.eternity.shards = 0;
     for (let i = 1; i <= 10; i++) player.eternity.generators[i].amount = 0;
@@ -364,4 +367,12 @@ export function updateEternityTemp() {
   }
 
   updateECTemp()
+
+  temp.eternity.dilation.effect = TimeDilation.effect;
+
+  for (let i = 0; i < TimeDilation.upgrades.length; i++) {
+    const U = TimeDilation.upgrades[i], L = player.eternity.dilation.upgrades[i];
+
+    if (U.effect) temp.eternity.dilation.upgrades[i] = Decimal.gt(L, 0) ? U.effect[0](L) : U.effect[1];
+  }
 }

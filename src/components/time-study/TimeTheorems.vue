@@ -2,10 +2,9 @@
 import { format } from '@/utils/formats';
 import PrimaryButton from '../PrimaryButton.vue';
 import { player } from '@/main';
-import { purchaseTimeTheorem, TimeTheorems } from '@/data/timestudies';
+import { getTotalTimeTheorems, purchaseTimeTheorem, TimeTheorems } from '@/data/timestudies';
 import { CURRENCIES, Currency } from '@/data/currencies';
 import Decimal from 'break_eternity.js';
-import { DC } from '@/utils/decimal';
 import { createDialogComponent } from '@/utils/dialog';
 
 function buyMaxTheorems() {
@@ -18,7 +17,7 @@ function buyMaxTheorems() {
     <div class="time-theorem-top">
       <div>
         <div><b>{{ format(player.eternity.timestudy.theorems, 0) }}</b> Time Theorems</div>
-        <div style="font-size: 12px;">({{ format(player.eternity.timestudy.p_theorems.reduce((a,b) => Decimal.add(a,b), DC.D0), 0) }} total)</div>
+        <div style="font-size: 12px;">({{ format(getTotalTimeTheorems(), 0) }} total)</div>
       </div>
       <PrimaryButton class="time-theorem-button" @click="createDialogComponent('ts-presets')">Presets</PrimaryButton>
     </div>

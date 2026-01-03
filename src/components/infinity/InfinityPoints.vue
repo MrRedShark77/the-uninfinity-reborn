@@ -18,8 +18,8 @@ const C = CURRENCIES.infinity
     <PrimaryButton class="g--infinity-button" v-if="player.infinity.reached || player.first.infinity" :enabled="INFINITY.reached" @click="INFINITY.crunch()">
       <div v-if="INFINITY.reached">
         <div v-if="inNormalChallenge(0) && inInfinityChallenge(0) && player.infinity.break">
-          Big Crunch for <b style="color: white;">{{ format(temp.currencies.infinity,0) }}</b> IP<br>
-          Current: <b style="color: white;">{{ format(Decimal.div(temp.currencies.infinity,player.infinity.time).mul(60).round(),0) }} IP/min</b>
+          Big Crunch for <b style="color: white;">{{ format(temp.currencies.infinity,0) }}</b> IP
+          <div v-if="Decimal.lt(player.infinity.points, DC.DE308)">Current: <b style="color: white;">{{ format(Decimal.div(temp.currencies.infinity,player.infinity.time).mul(60).round(),0) }} IP/min</b></div>
         </div>
         <div v-else style="font-size: 24px;">Big Crunch</div>
       </div>

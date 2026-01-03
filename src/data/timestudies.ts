@@ -10,9 +10,10 @@ import { hasAchievement } from "./achievements";
 import { EXPANDER } from "./generators/normal-generators";
 import { notify } from "@/utils/notify";
 import { Quote } from "@/utils/quote";
+import { hasDilationUpgrade } from "./dilation";
 
 type TS_ID = number | string
-type TS_type = "normal" | "NG" | "IG" | "TG" | "active" | "passive" | "idle" | "light" | "dark"
+type TS_type = "normal" | "NG" | "IG" | "TG" | "active" | "passive" | "idle" | "light" | "dark" | "dil"
 
 export interface TimeStudy {
   type: TS_type,
@@ -66,6 +67,7 @@ export const TS_type: Record<TS_type, string> = {
   "idle": "Idle",
   "light": "Light",
   "dark": "Dark",
+  "dil": "",
 }
 
 export const TimeStudies: (TimeStudy | InvisibleBlock | EC_TS)[] = [
@@ -755,9 +757,24 @@ export const TimeStudies: (TimeStudy | InvisibleBlock | EC_TS)[] = [
     get description() { return `Eternity Challenge 12 (${player.challenges.eternity.completed[12]}/5)` },
     cost: 1,
   },
+
+  {
+    type: "dil",
+
+    id: 'DIL',
+    posiiton: [26, 1],
+    branch: ['EC11','EC12'],
+
+    get EC_base() { return 0 },
+    require() { return getECCompletions(11) >= 5 && getECCompletions(12) >= 5 && Decimal.gte(getTotalTimeTheorems(), 73200) },
+    get requirement() { return `<b>EC11x5</b> and <b>EC12x5</b> beaten and <b>${format(getTotalTimeTheorems(), 0)} / ${format(73200)}</b> total Time Theorems.` },
+
+    get description() { return `Unlock <b>Time Dilation</b>.` },
+    cost: 60000,
+  },
 ]
 
-export function getGeneratorSplitAllowance() { return 1 + +hasTimeStudy(212) }
+export function getGeneratorSplitAllowance() { return hasDilationUpgrade(9) ? 3 : 1 + +hasTimeStudy(212) }
 export function getTimeStudy(id: number, index: boolean = false) { return TimeStudies[index ? id : TimeStudiesIndex[id]] };
 
 export const TimeStudiesIndex: Record<string, number> = {};
@@ -790,10 +807,16 @@ export function TimeStudyBranches() {
 
 export function respecTimeStudies(noreset: boolean = false) {
   const keep: TS_ID[] = []
-  // for (const TS of TimeStudies) if (TS.type !== 'invisible');
+  let cost = DC.D0
+
+  for (const TS of TimeStudies) if (TS.type === 'dil' && hasTimeStudy(TS.id)) {
+    keep.push(TS.id)
+    cost = cost.add(TS.cost)
+  }
+
   player.eternity.timestudy.purchased = keep
 
-  player.eternity.timestudy.theorems = player.eternity.timestudy.p_theorems.reduce((a,b) => Decimal.add(a,b), DC.D0);
+  player.eternity.timestudy.theorems = Decimal.sub(player.eternity.timestudy.p_theorems.reduce((a,b) => Decimal.add(a,b), DC.D0), cost).max(0);
 
   if (!noreset) ETERNITY.reset();
 }
@@ -810,7 +833,8 @@ export function canAffordTimeStudy(id: TS_ID) {
 export function advancedAffordTS(id: TS_ID) {
   const TS = TimeStudies[TimeStudiesIndex[id]] as TimeStudy | EC_TS;
 
-  if (TS.type === 'EC') return getECCompletions(+TS.id.split("EC")[1]) && TS.branch.some(x => player.eternity.timestudy.purchased.includes(x))
+  if (TS.type === 'dil') return TS.branch.some(x => player.eternity.timestudy.purchased.includes(x));
+  else if (TS.type === 'EC') return getECCompletions(+TS.id.split("EC")[1]) && TS.branch.some(x => player.eternity.timestudy.purchased.includes(x))
   else return player.eternity.timestudy.purchased.includes(id);
 }
 
@@ -834,6 +858,8 @@ export const TimeTheorems: {
   },
 ]
 
+export function getTotalTimeTheorems() { return player.eternity.timestudy.p_theorems.reduce((a,b) => Decimal.add(a,b), DC.D0) }
+
 export function purchaseTimeTheorem(i: number, max: boolean = false) {
   if (i === 2 && player.eternity.generators.every((x,i) => i === 0 || Decimal.lt(x.bought, 1))) return;
 
@@ -856,10 +882,17 @@ export function purchaseTimeStudy(id: TS_ID) {
     player.eternity.timestudy.theorems = Decimal.sub(player.eternity.timestudy.theorems, TS.cost).max(0)
     player.eternity.timestudy.purchased.push(id);
 
-    if (TS.type === 'EC') {
-      player.tab = 5
-      player.stab[5] = 2
-      Quote.addFromKeys("unlock_ec")
+    switch (TS.type) {
+      case 'EC':
+        player.tab = 5
+        player.stab[5] = 2
+        Quote.addFromKeys("unlock_ec")
+      break;
+      case 'dil':
+        player.tab = 7
+        player.stab[7] = 3
+        player.first.dilation = true;
+      break;
     }
   }
 }
@@ -876,11 +909,11 @@ export function updateTimeStudiesTemp() {
 
 export function calculateTimeStudiesCount(): number {
   let x = 0;
-  for (const TS of TimeStudies) if (TS.type !== 'invisible' && TS.type !== 'EC') x += +hasTimeStudy(TS.id);
+  for (const TS of TimeStudies) if (TS.type !== 'invisible' && TS.type !== 'EC' && TS.type !== 'dil') x += +hasTimeStudy(TS.id);
   return x
 }
 export function isTimeStudyEmpty(): boolean {
-  for (const TS of TimeStudies) if (TS.type !== 'invisible' && TS.type !== 'EC' && hasTimeStudy(TS.id)) return false;
+  for (const TS of TimeStudies) if (TS.type !== 'invisible' && TS.type !== 'EC' && TS.type !== 'dil' && hasTimeStudy(TS.id)) return false;
   return true
 }
 
@@ -890,7 +923,7 @@ export function filterTimeStudyPreset(arr: number[]) {
   value.forEach(x => {
     if (result.includes(x)) return;
     const TS = TimeStudies[TimeStudiesIndex[x]]
-    if (TS.type === 'invisible' || TS.type === 'EC') return;
+    if (TS.type === 'invisible' || TS.type === 'EC' || TS.type === 'dil') return;
     result.push(x)
   })
   return result

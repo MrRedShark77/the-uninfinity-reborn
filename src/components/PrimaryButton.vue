@@ -3,7 +3,7 @@ import { computed } from 'vue';
 
 // const { enabled = true, bought = false } = defineProps<{ enabled: boolean, bought: boolean }>()
 
-const { enabled, bought } = defineProps({
+const { enabled, bought, type } = defineProps({
   enabled: {
     type: Boolean,
     default: true
@@ -11,11 +11,16 @@ const { enabled, bought } = defineProps({
   bought: {
     type: Boolean,
     default: false
+  },
+  type: {
+    type: String,
+    default: "primary"
   }
 })
 
 const classObject = computed(() => {
   return {
+    [`o-${type}-btn`]: true,
     "o-primary-btn--disabled": !bought && !enabled,
     "o-primary-btn--bought": bought,
   }
@@ -25,7 +30,6 @@ const classObject = computed(() => {
 
 <template>
   <button
-    class="o-primary-btn"
     :class="classObject"
   >
     <slot/>

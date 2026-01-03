@@ -12,9 +12,10 @@ import { Quotes } from "./quote";
 import { EternityUpgrades } from "@/data/eternity";
 import Decimal from "break_eternity.js";
 import { respecTimeStudies } from "@/data/timestudies";
+import { TimeDilation } from "@/data/dilation";
 
 const LOCALSTORAGE_NAME = "uninfinity-reborn-save";
-const VERSION = 3;
+const VERSION = 4;
 
 export type Save = {
   points: DecimalSource;
@@ -99,6 +100,14 @@ export type Save = {
         value: number[],
       }[],
     },
+
+    dilation: {
+      active: boolean,
+      tachyonParticles: DecimalSource,
+      dilatedTime: DecimalSource,
+      bestDilatedTime: DecimalSource,
+      upgrades: DecimalSource[],
+    },
   };
 
   challenges: {
@@ -138,6 +147,7 @@ export type Save = {
   first: {
     infinity: boolean;
     eternity: boolean;
+    dilation: boolean;
   };
 
   tab: number;
@@ -233,6 +243,14 @@ export function getSaveData(): Save {
 
         presets: [],
       },
+
+      dilation: {
+        active: false,
+        tachyonParticles: 0,
+        dilatedTime: 0,
+        bestDilatedTime: 0,
+        upgrades: [],
+      },
     },
 
     challenges: {
@@ -266,6 +284,7 @@ export function getSaveData(): Save {
     first: {
       infinity: false,
       eternity: false,
+      dilation: false,
     },
 
     automations: {},
@@ -314,6 +333,7 @@ export function getSaveData(): Save {
   for (const i in InfinityEnergy.upgrades) S.infinity.energy.upgrades[i] = 0;
 
   for (const i in EternityUpgrades) S.eternity.upgrades[i] = 0;
+  for (const i in TimeDilation.upgrades) S.eternity.dilation.upgrades[i] = 0;
 
   for (const i of AchievementKeys) S.achievements[i] = false;
   for (const i of Object.keys(Quotes)) S.quotes[i] = false;
@@ -496,6 +516,11 @@ export function checkPlayer() {
       respecTimeStudies()
       notify("Time Study is automatically respeced for technical reason!","warn")
     }
+  }
+
+  if (player._VERSION < 4) {
+    player.infinity.fastest = Decimal.max(player.infinity.fastest, .05)
+    player.eternity.fastest = Decimal.max(player.eternity.fastest, .05)
   }
 
   player.lastPlayed = date

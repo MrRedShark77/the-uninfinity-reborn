@@ -9,6 +9,7 @@ import { Quote } from '@/utils/quote';
 import { INF_GENERATOR_REQUIREMENTS } from '@/data/generators/infinity-generators';
 import { computed } from 'vue';
 import { getECGoal, inEternitychallenge } from '@/data/challenges/eternity-challenges';
+import { TimeDilation } from '@/data/dilation';
 
 const reached = computed(() => {
   const U = INF_GENERATOR_REQUIREMENTS[player.infinity.generatorsUnlocked]
@@ -22,6 +23,8 @@ const unlock = () => {
     player.infinity.generatorsUnlocked++;
   }
 }
+
+const dilationReq = computed(()=>TimeDilation.pointRequirement)
 </script>
 
 <template>
@@ -36,12 +39,20 @@ const unlock = () => {
           Reach <b>{{ format(INF_GENERATOR_REQUIREMENTS[player.infinity.generatorsUnlocked][0]) }}</b> points and <b>{{ format(INF_GENERATOR_REQUIREMENTS[player.infinity.generatorsUnlocked][1]) }}</b> infinity points to unlock a new generator.
         </div>
       </PrimaryButton>
+    </template><template v-else-if="TimeDilation.active">
+      <PrimaryButton class="g--dilation-button" :type="'glowing'" :enabled="Decimal.gte(player.points, dilationReq)" @click="TimeDilation.run()">
+        <template v-if="Decimal.gte(player.points, dilationReq)">
+          Gain <b style="color: white;">{{ format(TimeDilation.pendingTP, 0) }}</b> Tachyon Particles.
+        </template><template v-else>
+          Reach <b style="color: white;">{{ format(dilationReq) }}</b> points.
+        </template>
+      </PrimaryButton>
     </template><template v-else>
       <PrimaryButton class="g--eternity-button" :enabled="ETERNITY.reached" @click="ETERNITY.eternity()">
         <div v-if="ETERNITY.reached">
           <div v-if="inEternitychallenge(0) && player.first.eternity">
-            Eternity for <b style="color: white;">{{ format(temp.currencies.eternity,0) }}</b> EP<br>
-            Current: <b style="color: white;">{{ format(Decimal.div(temp.currencies.eternity,player.eternity.time).mul(60).round(),0) }} EP/min</b>
+            Eternity for <b style="color: white;">{{ format(temp.currencies.eternity,0) }}</b> EP
+            <div v-if="Decimal.lt(player.eternity.points, DC.DE308)">Current: <b style="color: white;">{{ format(Decimal.div(temp.currencies.eternity,player.eternity.time).mul(60).round(),0) }} EP/min</b></div>
           </div>
           <div v-else-if="inEternitychallenge(0)">
             Other times await...<br>I need to become Eternal
@@ -64,6 +75,11 @@ const unlock = () => {
 
 .g--eternity-button {
   color: #b341e0;
+  grid-row: 2 / 3;
+}
+
+.g--dilation-button {
+  color: #64dd17;;
   grid-row: 2 / 3;
 }
 </style>

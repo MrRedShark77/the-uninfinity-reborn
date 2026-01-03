@@ -30,7 +30,8 @@ const INF_UPGS_ORDER = [
 .break-infinity {
   width: 200px;
   height: 120px;
-  font-family: 24px;
+  font-size: 16px;
+  font-weight: bold;
 }
 
 .break-infinity-upgrades {

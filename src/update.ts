@@ -2,7 +2,7 @@ import type { DecimalSource } from "break_eternity.js";
 import { EXPANDER, GENERATOR, getGeneratorBase, getGeneratorScalingPower, purchaseAllGenerators, REFINER, totalGeneratorMultiplier, totalGeneratorOoMMultiplier } from "./data/generators/normal-generators";
 import { player, state, temp } from "./main";
 import Decimal from "break_eternity.js";
-import { DC, softcap } from "./utils/decimal";
+import { DC, expPow, softcap } from "./utils/decimal";
 import { CURRENCIES, Currency } from "./data/currencies";
 import { hasInfinityUpgrade, INFINITY, InfinityUpgrade, infinityUpgradeEffect, simpleInfinityEffect, updateInfinityTemp } from "./data/infinity";
 import { getNC10Exponent, inNormalChallenge } from "./data/challenges/normal-challenges";
@@ -18,6 +18,7 @@ import { getTimeShardsEffect, purchaseAllTimeGenerators, TIME_GENERATOR, totalTi
 import { getTimeStudyEffect, updateTimeStudiesTemp } from "./data/timestudies";
 import { ETERNITY, simpleEternityEffect, updateEternityTemp } from "./data/eternity";
 import { EternityChallenges, failEternityChallenge, getECReward, inEternitychallenge } from "./data/challenges/eternity-challenges";
+import { TimeDilation } from "./data/dilation";
 
 // Calculation
 
@@ -39,7 +40,7 @@ export function loop() {
 
 export function calc(dt: number) {
   const dt_cap = player.flux.amount / (state.flux_speed - 1)
-  const dt_flux = state.flux_speed > 1 ? Math.min(dt, dt_cap) * state.flux_speed + (Math.max(dt, dt_cap) - dt_cap) : dt
+  const dt_flux = state.flux_speed > 1 ? Math.max(Math.min(dt, dt_cap) * state.flux_speed + (Math.max(dt, dt_cap) - dt_cap), 0) : dt
   const preU_dt = Decimal.mul(dt_flux, temp.speed)
 
   cond = Decimal.gte(temp.currencies.points, player.points) ? cond + dt_flux : 0;
@@ -71,7 +72,7 @@ export function calc(dt: number) {
 
   if (hasInfinityUpgrade(InfinityUpgrade.PassiveGen)) {
     player.infinity.passive = preU_dt.add(player.infinity.passive);
-    const f = Decimal.mul(player.infinity.fastest, 10)
+    const f = Decimal.mul(player.infinity.fastest, 10).max(.5)
     if (Decimal.gte(player.infinity.passive, f)) player.infinity.points = Decimal.mul(Decimal.div(player.infinity.passive, f).floor(), INFINITY.totalIPMultiplier).add(player.infinity.points);
     player.infinity.passive = Decimal.mod(player.infinity.passive, f);
   } else player.infinity.passive = 0;
@@ -79,7 +80,7 @@ export function calc(dt: number) {
   if (!inEternitychallenge(4)) {
     if (hasInfinityUpgrade(InfinityUpgrade.TimesGen)) {
       player.infinity.passiveTimes = preU_dt.add(player.infinity.passiveTimes);
-      const f = Decimal.mul(player.infinity.fastest, 5)
+      const f = Decimal.mul(player.infinity.fastest, 5).max(.25)
       if (Decimal.gte(player.infinity.passiveTimes, f)) player.infinity.times = Decimal.mul(Decimal.div(player.infinity.passiveTimes, f).floor(), temp.infinity.infinities_gain).add(player.infinity.times);
       player.infinity.passiveTimes = Decimal.mod(player.infinity.passiveTimes, f);
     } else player.infinity.passiveTimes = 0;
@@ -96,7 +97,7 @@ export function calc(dt: number) {
 
   if (Decimal.gte(player.eternity.times, 100)) {
     player.eternity.passiveTimes = preU_dt.add(player.eternity.passiveTimes);
-    const f = Decimal.mul(player.eternity.fastest, 2)
+    const f = Decimal.mul(player.eternity.fastest, 2).max(.1)
     if (player.eternity.passiveTimes >= f) player.eternity.times = Decimal.mul(Decimal.div(player.eternity.passiveTimes, f).floor(), temp.eternity.eternities_gain).add(player.eternity.times);
     player.eternity.passiveTimes = Decimal.mod(player.eternity.passiveTimes, f)
   } else player.eternity.passiveTimes = 0;
@@ -227,6 +228,11 @@ export type TempData = {
     challenge_rewards: DecimalSource[];
 
     ec10: DecimalSource;
+
+    dilation: {
+      effect: DecimalSource;
+      upgrades: DecimalSource[];
+    }
   };
 
   currencies: Record<string, DecimalSource>;
@@ -284,6 +290,11 @@ export function getTempData(): TempData {
       challenge_rewards: [],
 
       ec10: 1,
+
+      dilation: {
+        effect: 1,
+        upgrades: [],
+      },
     },
 
     currencies: {},
@@ -375,7 +386,7 @@ export function updateTemp() {
     let OoMs = Decimal.max(G.amount,1).log10();
     const fixed_OoMs = OoMs;
 
-    OoMs = softcap(OoMs, DC.DE308LOG, .5, "P")
+    OoMs = TimeDilation.active ? OoMs.pow(.25**TimeDilation.penalty) : softcap(OoMs, DC.DE308LOG, .5, "P")
 
     T.oom_inc = OoMs.gt(0) ? fixed_OoMs.div(OoMs) : 1
 
@@ -384,6 +395,8 @@ export function updateTemp() {
     .mul(Decimal.pow(4,G.bought))
 
     if (i === 1) T.mult = T.mult.mul(getTimeStudyEffect(11)).mul(getTimeStudyEffect(103));
+
+    if (TimeDilation.active) T.mult = expPow(T.mult, .75**TimeDilation.penalty);
 
     if (i >= 10) T.gain = 0;
     else {
@@ -401,7 +414,7 @@ export function updateTemp() {
     let OoMs = Decimal.max(G.amount,1).log10();
     const fixed_OoMs = OoMs;
 
-    OoMs = softcap(OoMs, DC.DE308LOG, .5, "P")
+    OoMs = TimeDilation.active ? OoMs.pow(.25**TimeDilation.penalty) : softcap(OoMs, DC.DE308LOG, .5, "P")
 
     T.oom_inc = OoMs.gt(0) ? fixed_OoMs.div(OoMs) : 1
 
@@ -410,6 +423,8 @@ export function updateTemp() {
     .mul(Decimal.pow(INF_GEN_POWER[i] ?? 1,G.bought))
 
     if (i === 1) T.mult = T.mult.mul(getECReward(2));
+
+    if (TimeDilation.active) T.mult = expPow(T.mult, .75**TimeDilation.penalty);
 
     if (i >= 10) {
       const G = TIME_GENERATOR(1)
@@ -433,7 +448,7 @@ export function updateTemp() {
     let OoMs = inEternitychallenge(9) ? DC.D0 : Decimal.max(G.amount,1).log10();
     const fixed_OoMs = OoMs;
 
-    OoMs = softcap(OoMs, DC.DE308LOG, oom_inc_exp, "P")
+    OoMs = TimeDilation.active ? OoMs.pow(oom_inc_exp.pow(2**TimeDilation.penalty)) : softcap(OoMs, DC.DE308LOG, oom_inc_exp, "P")
 
     T.oom_inc = OoMs.gt(0) ? fixed_OoMs.div(OoMs) : 1
 
@@ -458,6 +473,10 @@ export function updateTemp() {
       if (inInfinityChallenge(4) && i !== player.challenges.infinity.C4) T.mult = T.mult.pow(.25);
       if (isICBeaten(4)) T.mult = T.mult.pow(1.05);
     }
+
+    if (TimeDilation.active) T.mult = expPow(T.mult, .75**TimeDilation.penalty);
+
+    T.mult = T.mult.mul(temp.eternity.dilation.upgrades[6])
 
     if (i + s >= (inEternitychallenge(3) ? 4 : 10)) {
       const G = INF_GENERATOR(1)

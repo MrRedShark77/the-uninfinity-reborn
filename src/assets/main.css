@@ -102,6 +102,14 @@ h4 {
   border-top-color: #fff2;
 }
 
+.subtitle {
+  display: block;
+	font-size: 12px;
+	margin: 5px auto;
+	font-style: italic;
+  color: #ccc;
+}
+
 *::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -115,6 +123,8 @@ h4 {
   background-color: #888;
   border-radius: 10px;
 }
+
+/* #region Primary Buttons */
 
 .o-primary-btn {
   position: relative;
@@ -136,13 +146,6 @@ h4 {
 }
 .o-primary-btn.opaque {
   background-color: color-mix(in srgb, var(--button-color) 4%, #011);
-}
-button * {
-  user-select: none;
-}
-
-.no-active {
-  cursor: default;
 }
 
 .o-primary-btn:not(.o-primary-btn--disabled,.o-primary-btn--bought,.no-active,:active):hover {
@@ -168,11 +171,65 @@ button * {
   background-color: color-mix(in srgb, var(--frame-color) 4%, #011);
 }
 
+.o-glowing-btn {
+  position: relative;
+  margin: 2px;
+
+  --button-color: white;
+
+  font-size: 12px;
+  border: solid 2px var(--button-color);
+  box-shadow: inset 0px 0px 15px var(--button-color);
+  border-radius: 5px;
+  background-color: color-mix(in srgb, var(--button-color) 4%, black);
+  padding: 4px 8px;
+  color: white;
+
+  cursor: pointer;
+
+  transition-property: background-color, border, color, box-shadow;
+  transition-duration: 0.25s;
+}
+.o-glowing-btn:not(.o-primary-btn--disabled,.o-primary-btn--bought,.no-active,:active):hover {
+  box-shadow: inset 0px 0px 15px var(--button-color), 0px 0px 10px var(--button-color);
+  background-color: color-mix(in srgb, var(--button-color) 8%, black);
+}
+.o-glowing-btn.o-primary-btn--disabled,
+.o-glowing-btn.o-primary-btn--bought {
+  box-shadow: none;
+  background-color: color-mix(in srgb, var(--button-color) 4%, transparent);
+}
+
+.o-primary-btn.o-primary-btn--disabled,
+.o-glowing-btn.o-primary-btn--disabled {
+  --button-color: red;
+  color: white !important;
+
+  cursor: default;
+}
+.o-primary-btn.o-primary-btn--bought,
+.o-glowing-btn.o-primary-btn--bought {
+  --button-color: lime;
+  color: white !important;
+
+  cursor: default;
+}
+
+button * {
+  user-select: none;
+}
+
+.no-active {
+  cursor: default;
+}
+
 /*
 .o-primary-btn:not(.no-active):active {
   border-style: inset;
 }
 */
+
+/* #endregion */
 
 .g--generator-button, .g--expander {
   --button-color: #8ff;
@@ -189,19 +246,11 @@ button * {
 .g--flux-button {
   --button-color: var(--flux-color);
 }
-
-.o-primary-btn.o-primary-btn--disabled {
-  --button-color: red;
-  color: white !important;
-
-  cursor: default;
+.g--dilation-button {
+  --button-color: #64dd17;
 }
-
-.o-primary-btn.o-primary-btn--bought {
-  --button-color: lime;
-  color: white !important;
-
-  cursor: default;
+.g--rep-dilation-button {
+  --button-color: #68f4bc;
 }
 
 .generators {
@@ -293,6 +342,11 @@ button * {
   color: #2196f3;
   font-weight: bold;
   text-shadow: 1px 1px 5px #2196f3;
+}
+.g--dilation {
+  color: #64dd17;
+  font-weight: bold;
+  text-shadow: 1px 1px 5px #64dd17;
 }
 
 .g--flux-text {
@@ -519,6 +573,12 @@ button * {
 }
 .g--time-study--dark-bought {
   --button-color: #888 !important;
+}
+.g--time-study--dil {
+  --button-color: #080 !important;
+}
+.g--time-study--dil-bought {
+  --button-color: #0f0 !important;
 }
 
 #session-time {

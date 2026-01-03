@@ -16,7 +16,7 @@ const { config } = defineProps<{ config: Record<string, unknown> }>()
       <hr class="sub-line">
       <div id="time-study-preset-buttons">
         <PrimaryButton @click="newTSPreset()">New preset</PrimaryButton>
-        <PrimaryButton>Import preset</PrimaryButton>
+        <PrimaryButton v-if="false">Import preset</PrimaryButton>
       </div>
     </div>
   </div>
